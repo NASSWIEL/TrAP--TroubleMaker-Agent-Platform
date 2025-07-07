@@ -1,0 +1,179 @@
+[
+  {
+    "model": "api.categorie",
+    "pk": 1,
+    "fields": {
+      "nom": "Cardiologie"
+    }
+  },
+  {
+    "model": "api.categorie",
+    "pk": 2,
+    "fields": {
+      "nom": "Premiers Secours"
+    }
+  },
+  {
+    "model": "api.affirmation",
+    "pk": 1,
+    "fields": {
+      "affirmation": "Le coeur possède quatre ventricules distincts.",
+      "nbr_reponses": 2,
+      "is_correct_vf": false,
+      "option_1": null, "option_2": null, "option_3": null, "option_4": null, "reponse_correcte_qcm": null,
+      "explication": "Le coeur a deux oreillettes et deux ventricules."
+    }
+  },
+  {
+    "model": "api.affirmation",
+    "pk": 2,
+    "fields": {
+      "affirmation": "L'artère pulmonaire principale transporte du sang riche en oxygène.",
+      "nbr_reponses": 2,
+      "is_correct_vf": false,
+      "option_1": null, "option_2": null, "option_3": null, "option_4": null, "reponse_correcte_qcm": null,
+      "explication": "Elle transporte le sang pauvre en oxygène du ventricule droit vers les poumons."
+    }
+  },
+  {
+    "model": "api.affirmation",
+    "pk": 3,
+    "fields": {
+      "affirmation": "Quel est le signe d'alerte le plus courant d'un Accident Vasculaire Cérébral (AVC) ?",
+      "nbr_reponses": 4,
+      "is_correct_vf": null,
+      "option_1": "Une forte fièvre soudaine",
+      "option_2": "Une douleur intense à la poitrine",
+      "option_3": "Une faiblesse ou un engourdissement brutal d'un côté du corps (visage, bras, jambe)",
+      "option_4": "Des vomissements persistants",
+      "reponse_correcte_qcm": 3,
+      "explication": "La faiblesse/engourdissement unilatéral est un signe majeur (FAST: Face, Arm, Speech, Time)."
+    }
+  },
+  {
+    "model": "api.affirmation",
+    "pk": 4,
+    "fields": {
+      "affirmation": "Face à une brûlure thermique simple (1er degré, petite surface), quel est le premier geste à faire ?",
+      "nbr_reponses": 4,
+      "is_correct_vf": null,
+      "option_1": "Appliquer immédiatement de la glace",
+      "option_2": "Mettre du beurre ou de l'huile",
+      "option_3": "Faire couler de l'eau fraîche (environ 15°C) pendant 15 minutes",
+      "option_4": "Percer la cloque si elle apparaît",
+      "reponse_correcte_qcm": 3,
+      "explication": "Le refroidissement à l'eau fraîche (règle des 15) est le premier geste essentiel."
+    }
+  },
+  {
+    "model": "api.activite",
+    "pk": "CARD1",
+    "fields": {
+      "titre": "Quiz Cardiologie de Base",
+      "presentation_publique": "Testez vos connaissances fondamentales sur le coeur.",
+      "description": "Questions vrai/faux et QCM sur l'anatomie et la physiologie cardiaque de base.",
+      "etudiants_autorises": [2, 3],
+      "affirmations_associes": [1, 2, 3],
+      "destine_a": 1,
+      "encadrant": 1,
+      "created_at": "2024-01-01T12:00:00Z"
+    }
+  },
+  {
+    "model": "api.activite",
+    "pk": "SECU1",
+    "fields": {
+      "titre": "Quiz Premiers Secours",
+      "presentation_publique": "Évaluez votre connaissance des gestes qui sauvent.",
+      "description": "Questions sur les réactions initiales face à des situations courantes.",
+      "etudiants_autorises": [2],
+      "affirmations_associes": [4],
+      "destine_a": 2,
+      "encadrant": 1,
+      "created_at": "2024-01-02T10:00:00Z"
+    }
+  },
+  {
+    "model": "api.reponse",
+    "pk": 1,
+    "fields": {
+      "activite": "CARD1",
+      "affirmation": 1,
+      "etudiant": 2,
+      "reponse_vf": false,
+      "reponse_choisie_qcm": null,
+      "justification": "Je me souviens qu'il y a 2 oreillettes et 2 ventricules.",
+      "timestamp": "2024-01-10T14:05:10Z"
+    }
+  },
+  {
+    "model": "api.reponse",
+    "pk": 2,
+    "fields": {
+      "activite": "CARD1",
+      "affirmation": 2,
+      "etudiant": 2,
+      "reponse_vf": true,
+      "reponse_choisie_qcm": null,
+      "justification": "Je pensais que tout ce qui sortait du coeur était oxygéné.",
+      "timestamp": "2024-01-10T14:05:45Z"
+    }
+  },
+  {
+    "model": "api.reponse",
+    "pk": 3,
+    "fields": {
+      "activite": "CARD1",
+      "affirmation": 3,
+      "etudiant": 2,
+      "reponse_vf": null,
+      "reponse_choisie_qcm": 3,
+      "justification": "",
+      "timestamp": "2024-01-10T14:06:20Z"
+    }
+  },
+  {
+    "model": "api.reponse",
+    "pk": 4,
+    "fields": {
+      "activite": "CARD1",
+      "affirmation": 1,
+      "etudiant": 3,
+      "reponse_vf": false,
+      "reponse_choisie_qcm": null,
+      "justification": null,
+      "timestamp": "2024-01-11T09:15:00Z"
+    }
+  },
+    {
+    "model": "api.reponse",
+    "pk": 5,
+    "fields": {
+      "activite": "SECU1",
+      "affirmation": 4,
+      "etudiant": 2,
+      "reponse_vf": null,
+      "reponse_choisie_qcm": 3,
+      "justification": "La règle des 3x15.",
+      "timestamp": "2024-01-12T11:00:00Z"
+    }
+  },
+  {
+    "model": "api.debrief",
+    "pk": 1,
+    "fields": {
+      "feedback": "Exact ! L'artère pulmonaire est l'exception qui transporte du sang désaturé vers les poumons.",
+      "reponse": 2,
+      "encadrant": 1
+    }
+  },
+  {
+    "model": "api.debrief",
+    "pk": 2,
+    "fields": {
+      "feedback": "Bonne réponse concernant la règle des 15 minutes d'eau fraîche !",
+      "reponse": 5,
+      "encadrant": 1
+    }
+  }
+]
