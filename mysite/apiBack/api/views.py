@@ -89,6 +89,12 @@ class ActiviteLoginView(APIView):
             )
         # Check if the student is authorized for this specific activity
         if activite.etudiants_autorises.filter(pk=user.pk).exists():
+            # Also check if the activity is published for students
+            if not activite.is_published:
+                return Response(
+                    {'error': "Cette activité n'est pas encore publiée."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             # Authenticate and log in the user
             # Note: Django's login requires the backend to be configured (e.g., ModelBackend)
             # If using custom user model without password for students, login might behave unexpectedly.
@@ -628,8 +634,8 @@ class ActiviteAPIView(APIView):
                 serializer = ActiviteSerializer(activites, many=True, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_200_OK)
             elif user.role == 'etudiant':
-                # Students list activities they are authorized for
-                activites = Activite.objects.filter(etudiants_autorises=user)
+                # Students list only published activities they are authorized for
+                activites = Activite.objects.filter(etudiants_autorises=user, is_published=True)
                 serializer = ActiviteSerializer(activites, many=True, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
@@ -643,7 +649,14 @@ class ActiviteAPIView(APIView):
             is_encadrant_owner = user.role == 'encadrant' and activite.encadrant == user
             is_authorized_etudiant = user.role == 'etudiant' and activite.etudiants_autorises.filter(pk=user.pk).exists()
 
-            if is_encadrant_owner or is_authorized_etudiant:
+            if is_encadrant_owner:
+                # Encadrants can see both published and draft activities they own
+                serializer = ActiviteSerializer(activite, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            elif is_authorized_etudiant:
+                # Students can only see published activities they are authorized for
+                if not activite.is_published:
+                    return Response({"error": "Cette activité n'est pas encore publiée."}, status=status.HTTP_403_FORBIDDEN)
                 serializer = ActiviteSerializer(activite, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
