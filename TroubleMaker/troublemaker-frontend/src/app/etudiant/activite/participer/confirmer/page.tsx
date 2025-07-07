@@ -195,7 +195,7 @@ export default function Confirmer() {
               const response = reponses[affirmation.id];
               const justification = response?.justification || "(Aucune explication fournie)";
               const isExpanded = expandedTexts[affirmation.id] || false;
-              let displayAnswer = "Non répondu ou "Je ne sais pas"";
+              let displayAnswer = "Non répondu ou Je ne sais pas";
 
               if (response) {
                   if (affirmation.nbr_reponses === 2) {

@@ -37,7 +37,8 @@ const EtudiantLogin = () => {
 
             if (response.status === 200 && response.data) {
                 console.log("Login successful:", response.data);
-                router.push(`/etudiant/activite/participer?code=${encodeURIComponent(code)}`);
+                // Redirect to activity presentation page instead of directly to participation
+                router.push(`/etudiant/activite?code=${encodeURIComponent(code)}`);
             } else {
                 setError("Réponse invalide du serveur.");
             }

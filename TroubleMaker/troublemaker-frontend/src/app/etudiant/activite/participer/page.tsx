@@ -139,8 +139,15 @@ export default function Participer() {
         console.error("Error fetching initial data:", err);
          if (axios.isAxiosError(err) && err.response) {
            if (err.response.status === 404) setError(`L'activité ou les réponses pour "${activityCode}" n'ont pas été trouvées.`);
-           else if (err.response.status === 403) setError("Accès refusé à cette activité/réponses.");
-           else setError(err.response.data?.error || err.response.data?.detail || "Erreur lors du chargement des données.");
+           else if (err.response.status === 403) {
+               // Check if it's specifically about unpublished activity
+               const errorMessage = err.response.data?.error || "";
+               if (errorMessage.includes("pas encore publiée")) {
+                   setError("Cette activité n'est pas encore publiée. Veuillez contacter votre encadrant.");
+               } else {
+                   setError("Accès refusé à cette activité/réponses.");
+               }
+           } else setError(err.response.data?.error || err.response.data?.detail || "Erreur lors du chargement des données.");
         } else {
           setError("Erreur réseau ou serveur inaccessible.");
         }
@@ -293,6 +300,42 @@ export default function Participer() {
   if (loading) return <div className="flex justify-center items-center min-h-screen"><p className="text-xl">Chargement de l'activité...</p></div>;
   if (error && !activite) return <div className="flex justify-center items-center min-h-screen"><p className="text-red-600 text-xl p-4">{error}</p></div>;
   if (!activite) return <div className="flex justify-center items-center min-h-screen"><p className="text-yellow-600 text-xl">Aucune donnée d'activité disponible.</p></div>;
+  
+  // Handle case where activity has no affirmations
+  if (!activite.affirmations_associes || activite.affirmations_associes.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center">
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">{activite.titre}</h2>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <svg className="h-12 w-12 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-yellow-800 mb-2">
+                  Activité en cours de préparation
+                </h3>
+                <p className="text-yellow-700 text-lg">
+                  Cette activité ne contient aucune affirmation pour le moment. 
+                  Veuillez contacter votre encadrant pour plus d'informations.
+                </p>
+              </div>
+              <button 
+                onClick={() => router.back()}
+                className="mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Retour
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   if (currentAffirmationIndex >= activite.affirmations_associes.length || currentAffirmationIndex < 0) {
        return <div className="flex justify-center items-center min-h-screen"><p className="text-red-600 text-xl">Erreur: Index d'affirmation invalide.</p></div>;
   }

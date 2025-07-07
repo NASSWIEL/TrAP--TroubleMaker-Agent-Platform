@@ -8,6 +8,8 @@ interface ActiviteData {
     titre: string;
     presentation_publique: string | null;
     description: string | null;
+    affirmations_associes?: any[]; // Add this to check for empty affirmations
+    is_published?: boolean; // Add this to check publication status
 }
 
 const API_BASE_URL = "http://localhost:8000";
@@ -46,7 +48,13 @@ export default function ActivitePage() {
            if (err.response.status === 404) {
                setError(`L'activité avec le code "${activityCode}" n'a pas été trouvée ou vous n'y avez pas accès.`);
            } else if (err.response.status === 403) {
-                setError("Vous n'êtes pas autorisé à accéder à cette activité (Session invalide?).");
+                // Check if it's specifically about unpublished activity
+                const errorMessage = err.response.data?.error || "";
+                if (errorMessage.includes("pas encore publiée")) {
+                    setError("Cette activité n'est pas encore publiée. Veuillez contacter votre encadrant.");
+                } else {
+                    setError("Vous n'êtes pas autorisé à accéder à cette activité (Session invalide?).");
+                }
            } else {
                setError(err.response.data?.error || "Erreur lors de la récupération de l'activité.");
            }
@@ -62,11 +70,24 @@ export default function ActivitePage() {
   }, [activityCode, router]);
 
   const handleStartActivity = () => {
-      if (activityCode) {
-          router.push(`/etudiant/activite/participer?code=${encodeURIComponent(activityCode)}`);
-      } else {
+      if (!activityCode) {
           setError("Impossible de démarrer l'activité sans code.");
+          return;
       }
+      
+      // Check if activity has affirmations before allowing participation
+      if (activite && 'affirmations_associes' in activite && Array.isArray(activite.affirmations_associes) && activite.affirmations_associes.length === 0) {
+          setError("Cette activité ne contient aucune affirmation pour le moment. Veuillez contacter votre encadrant.");
+          return;
+      }
+      
+      // Check if activity is published
+      if (activite && activite.is_published === false) {
+          setError("Cette activité n'est pas encore publiée. Veuillez contacter votre encadrant.");
+          return;
+      }
+      
+      router.push(`/etudiant/activite/participer?code=${encodeURIComponent(activityCode)}`);
   }
 
   const styles: { [key: string]: CSSProperties } = {
@@ -169,6 +190,32 @@ export default function ActivitePage() {
         color: '#555',
         marginTop: '20px',
         textAlign: 'center'
+    },
+    warningBox: {
+      padding: "12px",
+      backgroundColor: "#fff3cd",
+      border: "1px solid #ffeaa7",
+      borderRadius: "8px",
+      marginTop: "16px"
+    },
+    warningText: {
+      color: "#856404",
+      fontSize: "1.2rem",
+      margin: "0",
+      fontWeight: "600"
+    },
+    unpublishedBox: {
+      padding: "12px",
+      backgroundColor: "#f8d7da",
+      border: "1px solid #f5c6cb",
+      borderRadius: "8px",
+      marginTop: "16px"
+    },
+    unpublishedText: {
+      color: "#721c24",
+      fontSize: "1.2rem",
+      margin: "0",
+      fontWeight: "600"
     }
   };
 
@@ -194,8 +241,22 @@ export default function ActivitePage() {
               <h3 style={styles.cardTitle}>{activite.titre || "États de choc"}</h3>
               <p style={styles.cardDescription}>
                 {activite.description || 
-                "Dans cette activité, vous allez travailler sur des affirmations portant sur le diagnostic et la prise en charge des états de choc en réanimation. L’objectif est de vous faire réfléchir, de confronter vos connaissances, et de mieux comprendre les éléments clés pour gérer ces situations critiques."}
+                "Dans cette activité, vous allez travailler sur des affirmations portant sur le diagnostic et la prise en charge des états de choc en réanimation. L'objectif est de vous faire réfléchir, de confronter vos connaissances, et de mieux comprendre les éléments clés pour gérer ces situations critiques."}
               </p>
+              {activite.is_published === false && (
+                <div style={styles.unpublishedBox}>
+                  <p style={styles.unpublishedText}>
+                    📝 Cette activité est en brouillon et n'est pas encore publiée.
+                  </p>
+                </div>
+              )}
+              {activite.affirmations_associes && activite.affirmations_associes.length === 0 && (
+                <div style={styles.warningBox}>
+                  <p style={styles.warningText}>
+                    ⚠️ Cette activité ne contient aucune affirmation pour le moment.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

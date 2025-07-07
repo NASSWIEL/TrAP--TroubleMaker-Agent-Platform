@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"; // 🔹 Import de useRouter
 import axios from "axios"; // 🔹 Import axios
 import { Button } from "@/components/ui/button";
 import Account from "@/components/ui/Account";
-import { Settings, Plus, SpellCheck, RefreshCw, MessageSquare } from "lucide-react";
+import { Settings, Plus, SpellCheck, RefreshCw, MessageSquare, User, LogOut } from "lucide-react";
 
 // 🔹 Define interface for Activity data from API
 interface Activity {
@@ -56,8 +56,26 @@ const App = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
+  // 🔹 State for user information
+  const [userEmail, setUserEmail] = useState<string>("user@example.com"); // Default email
+
   // 🔹 State for expanded descriptions (adjust based on fetched data)
   const [expandedDescriptions, setExpandedDescriptions] = useState<boolean[]>([]);
+
+  // 🔹 Logout function
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/logout/`, {}, {
+        withCredentials: true,
+      });
+      // Redirect to home page
+      window.location.href = 'http://localhost:3000';
+    } catch (err) {
+      console.error("Logout error:", err);
+      // Even if logout fails, redirect to home
+      window.location.href = 'http://localhost:3000';
+    }
+  };
 
   // 🔹 Fetch activities from API
   const fetchActivities = async () => {
@@ -69,6 +87,10 @@ const App = () => {
       });
       if (response.status === 200 && Array.isArray(response.data)) {
         setActivities(response.data);
+        // Try to get user email from the first activity's encadrant info
+        if (response.data.length > 0 && response.data[0].encadrant?.email) {
+          setUserEmail(response.data[0].encadrant.email);
+        }
         // Initialize expandedDescriptions based on fetched data
         setExpandedDescriptions(Array(response.data.length).fill(false));
         setLastRefresh(new Date()); // Set last refresh time
@@ -187,6 +209,30 @@ const App = () => {
                 })}
               </p>
             )}
+          </div>
+          
+          {/* User info and logout section */}
+          <div className="flex items-center space-x-4">
+            {/* Avatar */}
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <User className="h-6 w-6 text-white" />
+            </div>
+            
+            {/* User email */}
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">{userEmail}</span>
+              <span className="text-xs text-gray-500">Encadrant</span>
+            </div>
+            
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              title="Se déconnecter"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm font-medium">Déconnexion</span>
+            </button>
           </div>
         </header>
 
