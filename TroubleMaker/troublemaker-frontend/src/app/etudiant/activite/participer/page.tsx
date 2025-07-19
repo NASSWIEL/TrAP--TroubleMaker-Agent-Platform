@@ -21,6 +21,7 @@ interface AffirmationApi {
 interface ActiviteApiData {
     code_activite: string;
     titre: string;
+    type_affirmation_requise: number;
     affirmations_associes: AffirmationApi[];
 }
 
@@ -63,7 +64,7 @@ export default function Participer() {
   const vraiFauxOptions = ["Vrai", "Faux", "Je ne sais pas"];
   const qcmValues = ["1", "2", "3", "4", "Je ne sais pas"];
 
-  const mapLocalToApiResponse = useCallback((localResp: LocalResponse, affirmation: AffirmationApi): Partial<ReponseApiData> => {
+  const mapLocalToApiResponse = useCallback((localResp: LocalResponse, affirmation: AffirmationApi, activite: ActiviteApiData): Partial<ReponseApiData> => {
       const apiPayload: Partial<ReponseApiData> = {
           justification: localResp.pourquoi || null,
           reponse_vf: null,
@@ -71,10 +72,10 @@ export default function Participer() {
       };
       const selection = localResp.reponseSelection;
 
-      if (affirmation.nbr_reponses === 2) {
+      if (activite.type_affirmation_requise === 2) {
           if (selection === "Vrai") apiPayload.reponse_vf = true;
           else if (selection === "Faux") apiPayload.reponse_vf = false;
-      } else if (affirmation.nbr_reponses === 4) {
+      } else if (activite.type_affirmation_requise === 4) {
           const qcmValue = parseInt(selection, 10);
           if (!isNaN(qcmValue) && qcmValue >= 1 && qcmValue <= 4) {
               apiPayload.reponse_choisie_qcm = qcmValue;
@@ -83,13 +84,13 @@ export default function Participer() {
       return apiPayload;
   }, []);
 
-  const mapApiToLocalResponse = (apiResp: ReponseApiData | undefined, affirmation: AffirmationApi): LocalResponse => {
+  const mapApiToLocalResponse = (apiResp: ReponseApiData | undefined, affirmation: AffirmationApi, activite: ActiviteApiData): LocalResponse => {
       let reponseSelection = "Je ne sais pas";
       if (apiResp) {
-           if (affirmation.nbr_reponses === 2) {
+           if (activite.type_affirmation_requise === 2) {
               if (apiResp.reponse_vf === true) reponseSelection = "Vrai";
               else if (apiResp.reponse_vf === false) reponseSelection = "Faux";
-           } else if (affirmation.nbr_reponses === 4) {
+           } else if (activite.type_affirmation_requise === 4) {
                if (apiResp.reponse_choisie_qcm !== null && apiResp.reponse_choisie_qcm >= 1 && apiResp.reponse_choisie_qcm <= 4) {
                    reponseSelection = String(apiResp.reponse_choisie_qcm);
                }
@@ -131,7 +132,7 @@ export default function Participer() {
                   reponse_choisie_qcm: null,
                   justification: null,
              };
-             initialLocalResponses[index] = mapApiToLocalResponse(submitted, affirmation);
+             initialLocalResponses[index] = mapApiToLocalResponse(submitted, affirmation, fetchedActivite);
         });
         setSubmittedResponses(initialSubmittedResponses);
         setLocalResponses(initialLocalResponses);
@@ -180,7 +181,7 @@ export default function Participer() {
       const localResponse = localResponses[indexToSubmit];
       const effectiveLocalResponse = localResponse || { reponseSelection: 'Je ne sais pas', pourquoi: '' };
       const submitted = submittedResponses[indexToSubmit];
-      const apiPayload = mapLocalToApiResponse(effectiveLocalResponse, affirmation);
+      const apiPayload = mapLocalToApiResponse(effectiveLocalResponse, affirmation, activite);
       const currentExistingId = submitted?.id;
 
       let needsApiCall = false;
@@ -215,7 +216,7 @@ export default function Participer() {
               if (!localResponse || !localResponse.reponseSelection || localResponse.reponseSelection === 'Je ne sais pas') {
                   setLocalResponses(prev => ({
                       ...prev,
-                      [indexToSubmit]: mapApiToLocalResponse(savedData, affirmation)
+                      [indexToSubmit]: mapApiToLocalResponse(savedData, affirmation, activite)
                   }));
               }
               return { success: true, data: savedData };
@@ -341,7 +342,7 @@ export default function Participer() {
   }
 
   const currentAffirmationData = activite.affirmations_associes[currentAffirmationIndex];
-  const currentResponseOptions = currentAffirmationData.nbr_reponses === 2 ? vraiFauxOptions : qcmValues;
+  const currentResponseOptions = activite.type_affirmation_requise === 2 ? vraiFauxOptions : qcmValues;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 text-xl">
@@ -371,7 +372,7 @@ export default function Participer() {
               className="flex flex-col gap-6"
             >
               <div className={`text-xl font-medium grid grid-cols-1 ${currentAffirmationData.nbr_reponses === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3`}>
-                {currentResponseOptions.slice(0, currentAffirmationData.nbr_reponses).map((optionValue) => (
+                {currentResponseOptions.slice(0, activite.type_affirmation_requise).map((optionValue) => (
                   <div
                     key={optionValue}
                     className="text-xl font-medium flex items-center justify-center sm:justify-start space-x-2 p-2 rounded-lg hover:bg-gray-100 border border-gray-200"
@@ -381,7 +382,7 @@ export default function Participer() {
                       htmlFor={`${optionValue}-${currentAffirmationIndex}`}
                       className="whitespace-nowrap text-lg font-medium cursor-pointer"
                     >
-                      {currentAffirmationData.nbr_reponses === 4 ? qcmLabels[optionValue] : optionValue}
+                      {activite.type_affirmation_requise === 4 ? qcmLabels[optionValue] : optionValue}
                     </Label>
                   </div>
                 ))}

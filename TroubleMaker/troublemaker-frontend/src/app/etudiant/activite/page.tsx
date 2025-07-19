@@ -240,7 +240,7 @@ export default function ActivitePage() {
             <div style={styles.contentLeft}>
               <h3 style={styles.cardTitle}>{activite.titre || "États de choc"}</h3>
               <p style={styles.cardDescription}>
-                {activite.description || 
+                {activite.presentation_publique || 
                 "Dans cette activité, vous allez travailler sur des affirmations portant sur le diagnostic et la prise en charge des états de choc en réanimation. L'objectif est de vous faire réfléchir, de confronter vos connaissances, et de mieux comprendre les éléments clés pour gérer ces situations critiques."}
               </p>
               {activite.is_published === false && (

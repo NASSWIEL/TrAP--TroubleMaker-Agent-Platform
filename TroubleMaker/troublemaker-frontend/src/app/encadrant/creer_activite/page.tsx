@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axios from "axios"; // Import axios
 
@@ -198,6 +198,11 @@ const GererActivites = () => {
   };
 
   const [error, setError] = useState<string | null>(null); // State for error messages
+  
+  // États pour l'édition d'affirmations
+  const [editingAffirmation, setEditingAffirmation] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editExplication, setEditExplication] = useState("");
   const [loading, setLoading] = useState(false); // State for loading indicator
   const [isSubmitting, setIsSubmitting] = useState(false); // State to prevent double submission
   const [showRestoredMessage, setShowRestoredMessage] = useState(false); // Show data restored message
@@ -257,6 +262,177 @@ const GererActivites = () => {
 
     fetchAffirmations();
   }, [selectedAffirmations]); // Re-run when selectedAffirmations change
+
+  // Fonctions utilitaires pour l'affichage des boutons d'affirmation
+  const getAffirmationButtonColor = (affirmation: Affirmation) => {
+    // Toutes les affirmations utilisent le système Vrai/Faux
+    return affirmation.is_correct_vf ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
+  };
+
+  const getAffirmationButtonTitle = (affirmation: Affirmation) => {
+    // Toutes les affirmations utilisent le système Vrai/Faux
+    return affirmation.is_correct_vf ? "Marquer comme fausse" : "Marquer comme vraie";
+  };
+
+  const getAffirmationButtonText = (affirmation: Affirmation) => {
+    // Toutes les affirmations utilisent le système Vrai/Faux
+    return affirmation.is_correct_vf ? "Fausse" : "Vraie";
+  };
+
+  // Fonction pour démarrer l'édition d'une affirmation
+  const startEditingAffirmation = (affirmation: Affirmation) => {
+    setEditingAffirmation(affirmation.id);
+    setEditText(affirmation.affirmation);
+    setEditExplication(affirmation.explication || "");
+  };
+
+  // Fonction pour annuler l'édition
+  const cancelEditingAffirmation = () => {
+    setEditingAffirmation(null);
+    setEditText("");
+    setEditExplication("");
+  };
+
+  // Fonction pour sauvegarder les modifications d'une affirmation
+  const saveAffirmationChanges = async (affirmationId: number) => {
+    if (!editText.trim()) {
+      alert("Le texte de l'affirmation ne peut pas être vide.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          affirmation: editText.trim(),
+          explication: editExplication.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: `Erreur ${response.status}` }));
+        throw new Error(`Échec de la modification: ${response.status} - ${errorData.detail || JSON.stringify(errorData)}`);
+      }
+
+      const updatedAffirmation = await response.json();
+      
+      // Mettre à jour les listes d'affirmations
+      setDbAffirmations(prev => prev.map(aff => 
+        aff.id === affirmationId 
+          ? { ...aff, affirmation: updatedAffirmation.affirmation, explication: updatedAffirmation.explication }
+          : aff
+      ));
+      
+      setSelectedAffirmations(prev => prev.map(aff => 
+        aff.id === affirmationId 
+          ? { ...aff, affirmation: updatedAffirmation.affirmation, explication: updatedAffirmation.explication }
+          : aff
+      ));
+
+      // Mettre à jour le formulaire persisté
+      const updatedSelected = selectedAffirmations.map(aff => 
+        aff.id === affirmationId 
+          ? { ...aff, affirmation: updatedAffirmation.affirmation, explication: updatedAffirmation.explication }
+          : aff
+      );
+      saveFormState({ selectedAffirmations: updatedSelected });
+
+      cancelEditingAffirmation();
+      alert("Affirmation modifiée avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de la modification de l'affirmation:", error);
+      alert(`Erreur lors de la modification: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  };
+
+  // Fonction pour supprimer une affirmation
+  const deleteAffirmation = async (affirmationId: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette affirmation ? Cette action est irréversible.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}/`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: `Erreur ${response.status}` }));
+        throw new Error(`Échec de la suppression: ${response.status} - ${errorData.detail || JSON.stringify(errorData)}`);
+      }
+
+      // Retirer l'affirmation des listes
+      setDbAffirmations(prev => prev.filter(aff => aff.id !== affirmationId));
+      setSelectedAffirmations(prev => {
+        const updated = prev.filter(aff => aff.id !== affirmationId);
+        saveFormState({ selectedAffirmations: updated });
+        return updated;
+      });
+
+      alert("Affirmation supprimée avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'affirmation:", error);
+      alert(`Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  };
+
+  // Fonction pour basculer le statut vrai/faux d'une affirmation
+  const toggleAffirmationTruth = async (affirmationId: number, affirmation: Affirmation) => {
+    // Toutes les affirmations utilisent le système Vrai/Faux
+    const newStatus = !affirmation.is_correct_vf;
+    const statusText = newStatus ? "vraie" : "fausse";
+    
+    if (!window.confirm(`Êtes-vous sûr de vouloir marquer cette affirmation comme ${statusText} ?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          is_correct_vf: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: `Erreur ${response.status}` }));
+        throw new Error(`Échec de la modification: ${response.status} - ${errorData.detail || JSON.stringify(errorData)}`);
+      }
+
+      const updatedAffirmation = await response.json();
+      
+      // Mettre à jour les listes d'affirmations
+      setDbAffirmations(prev => prev.map(aff => 
+        aff.id === affirmationId 
+          ? { ...aff, is_correct_vf: updatedAffirmation.is_correct_vf }
+          : aff
+      ));
+      
+      setSelectedAffirmations(prev => {
+        const updated = prev.map(aff => 
+          aff.id === affirmationId 
+            ? { ...aff, is_correct_vf: updatedAffirmation.is_correct_vf }
+            : aff
+        );
+        saveFormState({ selectedAffirmations: updated });
+        return updated;
+      });
+
+      alert(`Affirmation marquée comme ${statusText} avec succès !`);
+    } catch (error) {
+      console.error("Erreur lors de la modification du statut de l'affirmation:", error);
+      alert(`Erreur lors de la modification: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  };
 
   const handleDeleteActivity = () => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) {
@@ -558,6 +734,11 @@ const GererActivites = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Degré de véracité :</label>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+                  <p className="text-sm text-blue-700">
+                    <strong>Note :</strong> Ce paramètre détermine comment les étudiants répondront, mais les affirmations restent toujours soit vraies soit fausses.
+                  </p>
+                </div>
                 <div className="flex flex-col space-y-2">
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -568,7 +749,7 @@ const GererActivites = () => {
                       onChange={() => updateResponseCount(2)}
                       className="w-4 h-4"
                     />
-                    <span>Binaire (Vrai / Faux)</span>
+                    <span>Binaire (Vrai / Faux) - Les étudiants répondent par Vrai ou Faux</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -579,7 +760,7 @@ const GererActivites = () => {
                       onChange={() => updateResponseCount(4)}
                       className="w-4 h-4"
                     />
-                    <span>Gradué (Toujours faux / Géneralement faux / Géneralement vrai / Toujours vrai)</span>
+                    <span>Gradué (4 niveaux) - Les étudiants choisissent leur degré de certitude</span>
                   </label>
                 </div>
               </div>
@@ -667,23 +848,96 @@ const GererActivites = () => {
               {selectedAffirmations.map((affirmation) => (
                 <li
                   key={`selected-${affirmation.id}`}
-                  className={`p-4 rounded shadow-sm cursor-move text-xl flex justify-between items-center
+                  className={`p-4 rounded shadow-sm text-xl flex flex-col gap-3
                     ${affirmation.is_correct_vf ? 'bg-green-50' : 'bg-red-50'}`}
-                  draggable
-                  onDragStart={(event) => handleDragStart(event, affirmation, "selected")}
                 >
-                  <span className="flex-1 min-w-[200px] mr-4">{affirmation.affirmation}</span>
-                  {affirmation.explication && (
-                    <div className="relative group ml-6 flex-shrink-0">
-                      <img
-                        src="/auto.svg"
-                        alt="Auto Feedback"
-                        className="w-10 h-10 text-blue-500"
+                  {editingAffirmation === affirmation.id ? (
+                    // Mode édition
+                    <div className="space-y-3">
+                      <textarea
+                        className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 text-xl"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        rows={3}
+                        placeholder="Texte de l'affirmation..."
                       />
-                      <div className="absolute bottom-full right-0 mb-3 hidden w-max px-6 py-3 bg-gray-800 text-white text-xl rounded-lg shadow-lg group-hover:block">
-                        Feedback automatique
+                      <textarea
+                        className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 text-lg"
+                        value={editExplication}
+                        onChange={(e) => setEditExplication(e.target.value)}
+                        rows={2}
+                        placeholder="Explication (optionnelle)..."
+                      />
+                      <div className="flex justify-end gap-3">
+                        <button
+                          onClick={() => saveAffirmationChanges(affirmation.id)}
+                          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center gap-2 text-lg"
+                        >
+                          <Check size={18} /> Sauvegarder
+                        </button>
+                        <button
+                          onClick={cancelEditingAffirmation}
+                          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 flex items-center gap-2 text-lg"
+                        >
+                          <X size={18} /> Annuler
+                        </button>
                       </div>
                     </div>
+                  ) : (
+                    // Mode affichage normal
+                    <>
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <span 
+                            className="cursor-move block"
+                            draggable
+                            onDragStart={(event) => handleDragStart(event, affirmation, "selected")}
+                          >
+                            {affirmation.affirmation}
+                          </span>
+                          {affirmation.explication && (
+                            <p className="text-lg text-gray-600 mt-2 italic">
+                              Explication: {affirmation.explication}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {affirmation.explication && (
+                            <div className="relative group">
+                              <img src="/auto.svg" alt="Auto Feedback" className="w-8 h-8 text-blue-500"/>
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-3 py-2 bg-gray-800 text-white text-sm rounded-md shadow-lg group-hover:block z-10">
+                                Feedback automatique
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 mt-3">
+                        <button
+                          onClick={() => startEditingAffirmation(affirmation)}
+                          className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2 text-lg"
+                          title="Modifier l'affirmation"
+                        >
+                          <Edit2 size={16} /> Modifier
+                        </button>
+                        <button
+                          onClick={() => toggleAffirmationTruth(affirmation.id, affirmation)}
+                          className={`px-3 py-2 rounded-md flex items-center gap-2 text-lg text-white
+                            ${getAffirmationButtonColor(affirmation)}`}
+                          title={getAffirmationButtonTitle(affirmation)}
+                        >
+                          <Check size={16} /> 
+                          {getAffirmationButtonText(affirmation)}
+                        </button>
+                        <button
+                          onClick={() => deleteAffirmation(affirmation.id)}
+                          className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2 text-lg"
+                          title="Supprimer l'affirmation"
+                        >
+                          <Trash2 size={16} /> Suppr.
+                        </button>
+                      </div>
+                    </>
                   )}
                 </li>
               ))}
@@ -731,23 +985,96 @@ const GererActivites = () => {
                   {filteredDbAffirmations.map((affirmation) => (
                     <li
                       key={`db-${affirmation.id}`}
-                      className={`p-4 rounded shadow-sm cursor-move text-base md:text-xl flex justify-between items-center
+                      className={`p-4 rounded shadow-sm text-base md:text-xl flex flex-col gap-3
                         ${affirmation.is_correct_vf ? 'bg-green-50' : 'bg-red-50'}`}
-                      draggable
-                      onDragStart={(event) => handleDragStart(event, affirmation, "database")}
                     >
-                      <span className="flex-1 min-w-[200px] mr-4">{affirmation.affirmation}</span>
-                      {affirmation.explication && (
-                        <div className="relative group ml-6 flex-shrink-0">
-                          <img
-                            src="/auto.svg"
-                            alt="Auto Feedback"
-                            className="w-10 h-10 text-blue-500"
+                      {editingAffirmation === affirmation.id ? (
+                        // Mode édition
+                        <div className="space-y-3">
+                          <textarea
+                            className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 text-xl"
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            rows={3}
+                            placeholder="Texte de l'affirmation..."
                           />
-                          <div className="absolute bottom-full right-0 mb-3 hidden w-max px-6 py-3 bg-gray-800 text-white text-xl rounded-lg shadow-lg group-hover:block">
-                            Feedback automatique
+                          <textarea
+                            className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 text-lg"
+                            value={editExplication}
+                            onChange={(e) => setEditExplication(e.target.value)}
+                            rows={2}
+                            placeholder="Explication (optionnelle)..."
+                          />
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => saveAffirmationChanges(affirmation.id)}
+                              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center gap-2 text-lg"
+                            >
+                              <Check size={18} /> Sauvegarder
+                            </button>
+                            <button
+                              onClick={cancelEditingAffirmation}
+                              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 flex items-center gap-2 text-lg"
+                            >
+                              <X size={18} /> Annuler
+                            </button>
                           </div>
                         </div>
+                      ) : (
+                        // Mode affichage normal
+                        <>
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1">
+                              <span 
+                                className="cursor-move block"
+                                draggable
+                                onDragStart={(event) => handleDragStart(event, affirmation, "database")}
+                              >
+                                {affirmation.affirmation}
+                              </span>
+                              {affirmation.explication && (
+                                <p className="text-lg text-gray-600 mt-2 italic">
+                                  Explication: {affirmation.explication}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {affirmation.explication && (
+                                <div className="relative group">
+                                  <img src="/auto.svg" alt="Auto Feedback" className="w-8 h-8 text-blue-500"/>
+                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-3 py-2 bg-gray-800 text-white text-sm rounded-md shadow-lg group-hover:block z-10">
+                                    Feedback automatique
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 mt-3">
+                            <button
+                              onClick={() => startEditingAffirmation(affirmation)}
+                              className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2 text-lg"
+                              title="Modifier l'affirmation"
+                            >
+                              <Edit2 size={16} /> Modifier
+                            </button>
+                            <button
+                              onClick={() => toggleAffirmationTruth(affirmation.id, affirmation)}
+                              className={`px-3 py-2 rounded-md flex items-center gap-2 text-lg text-white
+                                ${getAffirmationButtonColor(affirmation)}`}
+                              title={getAffirmationButtonTitle(affirmation)}
+                            >
+                              <Check size={16} /> 
+                              {getAffirmationButtonText(affirmation)}
+                            </button>
+                            <button
+                              onClick={() => deleteAffirmation(affirmation.id)}
+                              className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2 text-lg"
+                              title="Supprimer l'affirmation"
+                            >
+                              <Trash2 size={16} /> Suppr.
+                            </button>
+                          </div>
+                        </>
                       )}
                     </li>
                   ))}

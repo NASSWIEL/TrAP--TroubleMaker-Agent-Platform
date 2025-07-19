@@ -19,6 +19,7 @@ interface AffirmationApi {
 interface ActiviteApiData {
     code_activite: string;
     titre: string;
+    type_affirmation_requise: number;
     affirmations_associes: AffirmationApi[];
 }
 
@@ -36,10 +37,10 @@ interface ReponseApiData {
 const API_BASE_URL = "http://localhost:8000";
 
 const qcmNumberToText: { [key: number]: string } = {
-    1: "Toujours faux",
-    2: "Généralement faux",
-    3: "Généralement vrai",
-    4: "Toujours vrai",
+    1: "Toujours vrai",
+    2: "Généralement vrai", 
+    3: "Généralement faux",
+    4: "Toujours faux",
 };
 
 export default function Confirmer() {
@@ -198,10 +199,10 @@ export default function Confirmer() {
               let displayAnswer = "Non répondu ou Je ne sais pas";
 
               if (response) {
-                  if (affirmation.nbr_reponses === 2) {
+                  if (activite.type_affirmation_requise === 2) {
                       if (response.reponse_vf === true) displayAnswer = "Vrai";
                       else if (response.reponse_vf === false) displayAnswer = "Faux";
-                  } else if (affirmation.nbr_reponses === 4) {
+                  } else if (activite.type_affirmation_requise === 4) {
                       if (response.reponse_choisie_qcm !== null && qcmNumberToText[response.reponse_choisie_qcm]) {
                            displayAnswer = qcmNumberToText[response.reponse_choisie_qcm];
                       }
