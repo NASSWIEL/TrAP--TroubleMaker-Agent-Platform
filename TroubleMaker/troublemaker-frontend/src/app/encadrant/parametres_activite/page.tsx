@@ -59,6 +59,7 @@ const GererActivites = () => {
   // États pour les catégories
   const [allCategories, setAllCategories] = useState<Categorie[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   // États supprimés car pas dans le modèle Django
   // const [learnerType, setLearnerType] = useState("interne");
@@ -430,6 +431,48 @@ const GererActivites = () => {
         return;
     }
 
+    // Validate category input - either select existing or create new
+    if (!selectedCategoryId && !newCategoryName.trim()) {
+      alert("Veuillez soit sélectionner une formation existante, soit en créer une nouvelle.");
+      return;
+    }
+
+    // The UI should prevent both being set, but just in case, prioritize new category creation
+    let categoryIdToUse = selectedCategoryId;
+
+    // Create new category if newCategoryName is provided
+    if (newCategoryName.trim()) {
+      try {
+        const categoryResponse = await fetch(`${API_BASE_URL}/categories/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ nom: newCategoryName.trim() })
+        });
+        
+        if (categoryResponse.status === 201) {
+          const newCategory = await categoryResponse.json();
+          categoryIdToUse = newCategory.id;
+          console.log("New category created:", newCategory);
+          
+          // Update the categories list to include the new category
+          setAllCategories(prev => [...prev, newCategory].sort((a, b) => a.nom.localeCompare(b.nom)));
+          setNewCategoryName(""); // Clear the input after successful creation
+        } else {
+          const errorData = await categoryResponse.json().catch(() => ({ detail: `Erreur ${categoryResponse.status}` }));
+          throw new Error(`Échec de la création de catégorie: ${categoryResponse.status} - ${errorData.detail || JSON.stringify(errorData)}`);
+        }
+      } catch (err: unknown) {
+        console.error("Error creating category:", err);
+        let errorMessage = "Erreur lors de la création de la nouvelle formation.";
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+        alert(errorMessage);
+        return;
+      }
+    }
+
     const studentIds = await getStudentIdsFromEmails(etudiantsAutorisesEmails);
     const newIsPublishedState = launchIntent ? !isPublished : isPublished;
  
@@ -439,7 +482,7 @@ const GererActivites = () => {
       description: description,
       type_affirmation_requise: typeAffirmationRequise,
       is_published: newIsPublishedState,
-      destine_a_id: selectedCategoryId || undefined, // Utilise l'ID de la catégorie sélectionnée
+      destine_a_id: categoryIdToUse || undefined, // Use the category ID (either existing or newly created)
       // Send IDs for write operations
       etudiants_autorises_ids: studentIds, 
       affirmations_associes_ids: selectedAffirmations.map(aff => aff.id),
@@ -581,18 +624,41 @@ const GererActivites = () => {
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Formation concernée :</label>
-                <select 
-                  className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                  value={selectedCategoryId || ""} 
-                  onChange={(e) => setSelectedCategoryId(e.target.value ? parseInt(e.target.value) : null)}
-                >
-                  <option value="">Sélectionner une formation...</option>
-                  {allCategories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.nom}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Créer une nouvelle formation :</label>
+                    <input
+                      type="text"
+                      placeholder="Nom de la nouvelle formation"
+                      className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newCategoryName}
+                      onChange={(e) => {
+                        setNewCategoryName(e.target.value);
+                        if (e.target.value.trim()) setSelectedCategoryId(null);
+                      }}
+                    />
+                  </div>
+                  {allCategories.length > 0 && (
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Ou sélectionner une formation existante :</label>
+                      <select 
+                        className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        value={selectedCategoryId || ""} 
+                        onChange={(e) => {
+                          setSelectedCategoryId(e.target.value ? parseInt(e.target.value) : null);
+                          if (e.target.value) setNewCategoryName("");
+                        }}
+                      >
+                        <option value="">Sélectionner une formation...</option>
+                        {allCategories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.nom}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Titre de l'activité :</label>

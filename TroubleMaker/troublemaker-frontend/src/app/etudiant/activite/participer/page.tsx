@@ -72,13 +72,35 @@ export default function Participer() {
       };
       const selection = localResp.reponseSelection;
 
-      if (activite.type_affirmation_requise === 2) {
-          if (selection === "Vrai") apiPayload.reponse_vf = true;
-          else if (selection === "Faux") apiPayload.reponse_vf = false;
-      } else if (activite.type_affirmation_requise === 4) {
-          const qcmValue = parseInt(selection, 10);
-          if (!isNaN(qcmValue) && qcmValue >= 1 && qcmValue <= 4) {
-              apiPayload.reponse_choisie_qcm = qcmValue;
+      // The UI shows options based on activite.type_affirmation_requise, but backend validation 
+      // is based on affirmation.nbr_reponses. We need to convert between them.
+      
+      if (affirmation.nbr_reponses === 2) {
+          // Backend expects True/False response
+          if (activite.type_affirmation_requise === 2) {
+              // UI shows Vrai/Faux, direct mapping
+              if (selection === "Vrai") apiPayload.reponse_vf = true;
+              else if (selection === "Faux") apiPayload.reponse_vf = false;
+          } else if (activite.type_affirmation_requise === 4) {
+              // UI shows 4-level scale, convert to True/False
+              // 1,2 = Vrai, 3,4 = Faux
+              const qcmValue = parseInt(selection, 10);
+              if (qcmValue === 1 || qcmValue === 2) apiPayload.reponse_vf = true;
+              else if (qcmValue === 3 || qcmValue === 4) apiPayload.reponse_vf = false;
+          }
+      } else if (affirmation.nbr_reponses === 4) {
+          // Backend expects QCM response
+          if (activite.type_affirmation_requise === 4) {
+              // UI shows 4-level scale, direct mapping
+              const qcmValue = parseInt(selection, 10);
+              if (!isNaN(qcmValue) && qcmValue >= 1 && qcmValue <= 4) {
+                  apiPayload.reponse_choisie_qcm = qcmValue;
+              }
+          } else if (activite.type_affirmation_requise === 2) {
+              // UI shows Vrai/Faux, convert to QCM scale
+              // Vrai = 1 (Toujours vrai), Faux = 4 (Toujours faux)
+              if (selection === "Vrai") apiPayload.reponse_choisie_qcm = 1;
+              else if (selection === "Faux") apiPayload.reponse_choisie_qcm = 4;
           }
       }
       return apiPayload;
@@ -87,12 +109,31 @@ export default function Participer() {
   const mapApiToLocalResponse = (apiResp: ReponseApiData | undefined, affirmation: AffirmationApi, activite: ActiviteApiData): LocalResponse => {
       let reponseSelection = "Je ne sais pas";
       if (apiResp) {
-           if (activite.type_affirmation_requise === 2) {
-              if (apiResp.reponse_vf === true) reponseSelection = "Vrai";
-              else if (apiResp.reponse_vf === false) reponseSelection = "Faux";
-           } else if (activite.type_affirmation_requise === 4) {
-               if (apiResp.reponse_choisie_qcm !== null && apiResp.reponse_choisie_qcm >= 1 && apiResp.reponse_choisie_qcm <= 4) {
-                   reponseSelection = String(apiResp.reponse_choisie_qcm);
+           // Convert from backend format to UI format
+           if (affirmation.nbr_reponses === 2) {
+               // Backend has True/False response
+               if (activite.type_affirmation_requise === 2) {
+                   // UI shows Vrai/Faux, direct mapping
+                   if (apiResp.reponse_vf === true) reponseSelection = "Vrai";
+                   else if (apiResp.reponse_vf === false) reponseSelection = "Faux";
+               } else if (activite.type_affirmation_requise === 4) {
+                   // UI shows 4-level scale, convert from True/False
+                   // true = 1 (Toujours vrai), false = 4 (Toujours faux)
+                   if (apiResp.reponse_vf === true) reponseSelection = "1";
+                   else if (apiResp.reponse_vf === false) reponseSelection = "4";
+               }
+           } else if (affirmation.nbr_reponses === 4) {
+               // Backend has QCM response
+               if (activite.type_affirmation_requise === 4) {
+                   // UI shows 4-level scale, direct mapping
+                   if (apiResp.reponse_choisie_qcm !== null && apiResp.reponse_choisie_qcm >= 1 && apiResp.reponse_choisie_qcm <= 4) {
+                       reponseSelection = String(apiResp.reponse_choisie_qcm);
+                   }
+               } else if (activite.type_affirmation_requise === 2) {
+                   // UI shows Vrai/Faux, convert from QCM scale
+                   // 1,2 = Vrai, 3,4 = Faux
+                   if (apiResp.reponse_choisie_qcm === 1 || apiResp.reponse_choisie_qcm === 2) reponseSelection = "Vrai";
+                   else if (apiResp.reponse_choisie_qcm === 3 || apiResp.reponse_choisie_qcm === 4) reponseSelection = "Faux";
                }
            }
       }
@@ -342,6 +383,7 @@ export default function Participer() {
   }
 
   const currentAffirmationData = activite.affirmations_associes[currentAffirmationIndex];
+  // Use the activity's type_affirmation_requise to determine which options to show to students
   const currentResponseOptions = activite.type_affirmation_requise === 2 ? vraiFauxOptions : qcmValues;
 
   return (
@@ -371,7 +413,7 @@ export default function Participer() {
               onValueChange={(value) => handleLocalResponseChange(currentAffirmationIndex, "reponseSelection", value)}
               className="flex flex-col gap-6"
             >
-              <div className={`text-xl font-medium grid grid-cols-1 ${currentAffirmationData.nbr_reponses === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3`}>
+              <div className={`text-xl font-medium grid grid-cols-1 ${activite.type_affirmation_requise === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3`}>
                 {currentResponseOptions.slice(0, activite.type_affirmation_requise).map((optionValue) => (
                   <div
                     key={optionValue}

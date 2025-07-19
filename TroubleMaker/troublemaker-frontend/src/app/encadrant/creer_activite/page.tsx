@@ -23,6 +23,12 @@ interface Affirmation {
   reponse_correcte_qcm?: number;
 }
 
+// 🔹 Define interface for Category data from API
+interface Categorie {
+  id: number;
+  nom: string;
+}
+
 // Define form state interface for persistence
 interface FormState {
   activityTitle: string;
@@ -35,6 +41,8 @@ interface FormState {
   isReady: boolean;
   learnerType: string;
   training: string;
+  selectedCategoryId: number | null;
+  newCategoryName: string;
   selectedAffirmations: Affirmation[];
   searchQuery: string;
 }
@@ -54,6 +62,8 @@ const usePersistedFormState = () => {
     isReady: false,
     learnerType: "interne",
     training: "",
+    selectedCategoryId: null,
+    newCategoryName: "",
     selectedAffirmations: [],
     searchQuery: "",
   });
@@ -101,6 +111,8 @@ const usePersistedFormState = () => {
         isReady: false,
         learnerType: "interne",
         training: "",
+        selectedCategoryId: null,
+        newCategoryName: "",
         selectedAffirmations: [],
         searchQuery: "",
       });
@@ -127,6 +139,8 @@ const GererActivites = () => {
   const [training, setTraining] = useState(formState.training);
   const [selectedAffirmations, setSelectedAffirmations] = useState<Affirmation[]>(formState.selectedAffirmations);
   const [searchQuery, setSearchQuery] = useState(formState.searchQuery);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(formState.selectedCategoryId);
+  const [newCategoryName, setNewCategoryName] = useState(formState.newCategoryName);
 
   // Update individual states when formState changes (for initial load)
   useEffect(() => {
@@ -142,6 +156,8 @@ const GererActivites = () => {
     setTraining(formState.training);
     setSelectedAffirmations(formState.selectedAffirmations);
     setSearchQuery(formState.searchQuery);
+    setSelectedCategoryId(formState.selectedCategoryId);
+    setNewCategoryName(formState.newCategoryName);
   }, [formState]);
 
   // Wrapper functions to update state and persist to localStorage
@@ -197,6 +213,16 @@ const GererActivites = () => {
     saveFormState({ searchQuery: value });
   };
 
+  const updateSelectedCategoryId = (value: number | null) => {
+    setSelectedCategoryId(value);
+    saveFormState({ selectedCategoryId: value });
+  };
+
+  const updateNewCategoryName = (value: string) => {
+    setNewCategoryName(value);
+    saveFormState({ newCategoryName: value });
+  };
+
   const [error, setError] = useState<string | null>(null); // State for error messages
   
   // États pour l'édition d'affirmations
@@ -223,6 +249,10 @@ const GererActivites = () => {
   // State for affirmations fetched from the database
   const [dbAffirmations, setDbAffirmations] = useState<Affirmation[]>([]);
   const [loadingAffirmations, setLoadingAffirmations] = useState(true);
+
+  // State for categories fetched from the database
+  const [categories, setCategories] = useState<Categorie[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Fetch affirmations from API on component mount and sort them
   useEffect(() => {
@@ -262,6 +292,31 @@ const GererActivites = () => {
 
     fetchAffirmations();
   }, [selectedAffirmations]); // Re-run when selectedAffirmations change
+
+  // Fetch categories from API on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const response = await axios.get<Categorie[]>(`${API_BASE_URL}/api/categories/`, {
+          withCredentials: true,
+        });
+        if (response.status === 200 && Array.isArray(response.data)) {
+          setCategories(response.data);
+        } else {
+          console.error("Erreur lors de la récupération des catégories.");
+          setCategories([]);
+        }
+      } catch (err: unknown) {
+        console.error("Error fetching categories:", err);
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Fonctions utilitaires pour l'affichage des boutons d'affirmation
   const getAffirmationButtonColor = (affirmation: Affirmation) => {
@@ -446,6 +501,8 @@ const GererActivites = () => {
       setIsReady(false);
       setLearnerType("interne");
       setTraining("");
+      setSelectedCategoryId(null);
+      setNewCategoryName("");
       setSelectedAffirmations([]);
       setSearchQuery("");
       // Clear persisted data
@@ -477,19 +534,64 @@ const GererActivites = () => {
       return;
     }
 
+    // Validate category input - either select existing or create new
+    if (!selectedCategoryId && !newCategoryName.trim()) {
+      setError("Veuillez soit sélectionner une formation existante, soit en créer une nouvelle.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // If both are provided, prioritize new category creation
+    if (selectedCategoryId && newCategoryName.trim()) {
+      setError("Veuillez choisir soit de sélectionner une formation existante, soit de créer une nouvelle, mais pas les deux.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    let categoryIdToUse = selectedCategoryId;
+
+    // Create new category if newCategoryName is provided
+    if (newCategoryName.trim()) {
+      try {
+        const categoryResponse = await axios.post(`${API_BASE_URL}/api/categories/`, 
+          { nom: newCategoryName.trim() }, 
+          { withCredentials: true }
+        );
+        if (categoryResponse.status === 201) {
+          categoryIdToUse = categoryResponse.data.id;
+          console.log("New category created:", categoryResponse.data);
+        } else {
+          throw new Error(`Échec de la création de catégorie: ${categoryResponse.status}`);
+        }
+      } catch (err: unknown) {
+        console.error("Error creating category:", err);
+        let errorMessage = "Erreur lors de la création de la nouvelle formation.";
+        if (axios.isAxiosError(err) && err.response) {
+          const backendError = err.response.data;
+          if (backendError.nom && Array.isArray(backendError.nom)) {
+            errorMessage = `Formation: ${backendError.nom.join(', ')}`;
+          } else if (backendError.detail) {
+            errorMessage = backendError.detail;
+          }
+        }
+        setError(errorMessage);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const activityData = {
       titre: activityTitle,
       code_activite: activityCode.toUpperCase(), // Ensure code is uppercase like in the backend
       presentation_publique: publicPresentation,
       description: description,
-      degre_veracite: responseCount, // Assuming backend expects number
-      feedback_automatique: isDebriefAuto, // Assuming backend expects boolean
-      est_pret: isReady, // Assuming backend field name
-      type_apprenant: learnerType, // Assuming backend field name
+      type_affirmation_requise: responseCount, // Send the response type instead of degre_veracite
       // Include associated affirmations IDs for backend
       affirmations_associes_ids: selectedAffirmations.map(a => a.id),
       // Send the email list to backend for student user creation
       etudiants_emails: emailList.trim(),
+      // Send the category ID (either existing or newly created)
+      destine_a_id: categoryIdToUse,
     };
 
     console.log("Submitting Activity Data:", activityData);
@@ -683,13 +785,44 @@ const GererActivites = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Formation concernée :</label>
-                <input
-                  type="text"
-                  placeholder="Entrez la formation concernée"
-                  className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={training}
-                  onChange={(e) => updateTraining(e.target.value)}
-                />
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Créer une nouvelle formation :</label>
+                    <input
+                      type="text"
+                      placeholder="Nom de la nouvelle formation"
+                      className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newCategoryName}
+                      onChange={(e) => updateNewCategoryName(e.target.value)}
+                    />
+                  </div>
+                  {categories.length > 0 && (
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Ou sélectionner une formation existante :</label>
+                      {loadingCategories ? (
+                        <div className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md bg-gray-100">
+                          Chargement des catégories...
+                        </div>
+                      ) : (
+                        <select
+                          className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={selectedCategoryId || ""}
+                          onChange={(e) => {
+                            updateSelectedCategoryId(e.target.value ? parseInt(e.target.value) : null);
+                            if (e.target.value) updateNewCategoryName("");
+                          }}
+                        >
+                          <option value="">Sélectionnez une formation</option>
+                          {categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.nom}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
