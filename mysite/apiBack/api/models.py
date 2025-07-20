@@ -133,20 +133,22 @@ class Affirmation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
 
     def clean(self):
+        # Validation simplifiée : on autorise is_correct_vf pour tous les types
+        # Le type d'activité (nbr_reponses) détermine seulement l'interface de réponse
+        
         if self.nbr_reponses == 2:
             if self.is_correct_vf is None:
                 raise ValidationError({'is_correct_vf': "Le statut Vrai/Faux (is_correct_vf) est requis si nbr_reponses=2."}) 
-            # Ensure QCM index is cleared
-            if self.reponse_correcte_qcm is not None:
-                # Raise error or clear? Clearing is safer during clean.
-                self.reponse_correcte_qcm = None 
+            # Pour les réponses binaires, on peut optionnellement garder reponse_correcte_qcm à None
+            # mais on ne force plus
+            
         elif self.nbr_reponses == 4:
-            if self.reponse_correcte_qcm is None:
-                 raise ValidationError({'reponse_correcte_qcm': "L'index de la réponse correcte (reponse_correcte_qcm) est requis si nbr_reponses=4."}) 
-            # Ensure V/F bool is cleared
-            if self.is_correct_vf is not None:
-                # Raise error or clear?
-                self.is_correct_vf = None 
+            # Pour les réponses graduées, on permet toujours is_correct_vf
+            # car les affirmations ont intrinsèquement une valeur de vérité
+            if self.is_correct_vf is None:
+                raise ValidationError({'is_correct_vf': "Le statut Vrai/Faux (is_correct_vf) est requis même pour les réponses graduées."}) 
+            # On peut optionnellement garder reponse_correcte_qcm mais ce n'est plus obligatoire
+            
         elif self.nbr_reponses is None:
              raise ValidationError({"nbr_reponses": "Le format (nbr_reponses: 2 ou 4) est requis."})
         else: # If nbr_reponses is something other than 2 or 4
@@ -166,7 +168,7 @@ class Affirmation(models.Model):
     def __str__(self):
          format_type = f" ({self.get_nbr_reponses_display()})" if self.nbr_reponses else " (Format non défini)"
          status = "[?]"
-         if self.nbr_reponses == 2 and self.is_correct_vf is not None:
+         if self.is_correct_vf is not None:
              status = "Vrai" if self.is_correct_vf else "Faux"
          elif self.nbr_reponses == 4 and self.reponse_correcte_qcm is not None:
              status = f"4-Choix (Correct: {self.reponse_correcte_qcm})"

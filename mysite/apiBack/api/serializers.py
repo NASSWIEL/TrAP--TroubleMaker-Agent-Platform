@@ -65,6 +65,8 @@ class AffirmationSerializer(serializers.ModelSerializer):
         is_correct_vf = data.get('is_correct_vf', getattr(self.instance, 'is_correct_vf', None))
         reponse_correcte_qcm = data.get('reponse_correcte_qcm', getattr(self.instance, 'reponse_correcte_qcm', None))
 
+        # Validation simplifiée : is_correct_vf est maintenant permis pour tous les types
+        # car toutes les affirmations ont intrinsèquement une valeur de vérité
         if nbr_reponses == 2:
             if is_correct_vf is None:
                 raise serializers.ValidationError({
@@ -75,13 +77,14 @@ class AffirmationSerializer(serializers.ModelSerializer):
                     'reponse_correcte_qcm': "Ce champ ne doit pas être défini lorsque nbr_reponses est 2."
                 })
         elif nbr_reponses == 4:
+            # Pour les réponses graduées, is_correct_vf est maintenant permis
+            if is_correct_vf is None:
+                raise serializers.ValidationError({
+                    'is_correct_vf': "Ce champ est requis même pour les réponses graduées."
+                })
             if reponse_correcte_qcm is None:
                 raise serializers.ValidationError({
                     'reponse_correcte_qcm': "Ce champ est requis lorsque nbr_reponses est 4 (4 Choix)."
-                })
-            if is_correct_vf is not None:
-                 raise serializers.ValidationError({
-                    'is_correct_vf': "Ce champ ne doit pas être défini lorsque nbr_reponses est 4."
                 })
         elif nbr_reponses is None:
              raise serializers.ValidationError({"nbr_reponses": "Le format (nbr_reponses: 2 ou 4) est requis."}) 

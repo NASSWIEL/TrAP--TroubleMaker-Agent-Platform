@@ -3,7 +3,8 @@ from .views import (
     ActiviteLoginView, LogoutAPIView, EncadrantLoginView,
     ActiviteAPIView, AffirmationAPIView, ReponseAPIView, DebriefAPIView,
     Generate, ChatbotAPIView, GeminiGenerateAffirmationsAPIView,
-    GeminiMakeHarderAPIView, AuthTestView, EmailToIdResolverView
+    GeminiMakeHarderAPIView, AuthTestView, EmailToIdResolverView,
+    CategorieAPIView
 )
 
 urlpatterns = [
@@ -37,6 +38,9 @@ urlpatterns = [
 
     # User management endpoints
     path('users/get_ids_by_email/', EmailToIdResolverView.as_view(), name='email_to_id_resolver'),
+
+    # Categories endpoint
+    path('categories/', CategorieAPIView.as_view(), name='categories_list'),
 
     # Nouvelle route pour tester l'authentification
     path('auth-test/', AuthTestView.as_view(), name='auth-test'),

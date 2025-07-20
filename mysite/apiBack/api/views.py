@@ -1263,3 +1263,29 @@ class EmailToIdResolverView(APIView):
                 {'error': f'Error resolving emails: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class CategorieAPIView(APIView):
+    """API simple pour lister et créer les catégories."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retourne toutes les catégories."""
+        if request.user.role != 'encadrant':
+            return Response({"error": "Permission refusée."}, status=status.HTTP_403_FORBIDDEN)
+        
+        categories = Categorie.objects.all().order_by('nom')
+        from .serializers import CategorieSerializer
+        serializer = CategorieSerializer(categories, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        """Crée une nouvelle catégorie."""
+        if request.user.role != 'encadrant':
+            return Response({"error": "Permission refusée."}, status=status.HTTP_403_FORBIDDEN)
+        
+        from .serializers import CategorieSerializer
+        serializer = CategorieSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
