@@ -578,23 +578,8 @@ const GererActivites = () => {
             ? (savedActivity.is_published ? 'lancée' : 'retirée de publication') 
             : (method === 'POST' ? 'créée' : 'enregistrée');
         alert(`Activité ${actionVerb} avec succès ! Code: ${savedActivity.code_activite}`);
-        
-        // Update all states with the saved activity data from server
         setIsPublished(savedActivity.is_published); 
         setCurrentActivityCode(savedActivity.code_activite);
-        setActivityTitle(savedActivity.titre || '');
-        setPublicPresentation(savedActivity.presentation_publique || '');
-        setDescription(savedActivity.description || '');
-        setTypeAffirmationRequise(savedActivity.type_affirmation_requise || 2);
-        setSelectedCategoryId(savedActivity.destine_a_id || null);
-        setLearnerType(savedActivity.type_apprenant || "interne");
-        setEtudiantsAutorisesEmails(savedActivity.etudiants_autorises?.map(e => e.email).join(', ') || '');
-        setSelectedAffirmations(savedActivity.affirmations_associes || []);
-        
-        if (savedActivity.destine_a) {
-          setFormationInput(savedActivity.destine_a.nom);
-        }
-        
         // If it was a new creation, update URL to reflect the new code for editing mode
         if (!activityCodeParam && method === 'POST') {
             router.replace(`/encadrant/parametres_activite?code=${savedActivity.code_activite}`);
@@ -671,22 +656,10 @@ const GererActivites = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
-      <header className="bg-white shadow-md p-4 mb-6 flex justify-between items-center">
-        {/* Bouton retour au menu principal */}
-        <button
-          onClick={() => router.push('/encadrant/liste_activite')}
-          className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center space-x-2"
-        >
-          <span>←</span>
-          <span>Menu Principal</span>
-        </button>
-        
+      <header className="bg-white shadow-md p-4 mb-6 flex justify-center">
         <h1 className="text-4xl font-bold text-gray-800">
           {activityCodeParam ? "Paramètres de l'Activité" : "Créer une Activité"}
         </h1>
-        
-        {/* Espace pour équilibrer le layout */}
-        <div className="w-32"></div>
       </header>
 
       <div className="space-y-6">
@@ -768,7 +741,7 @@ const GererActivites = () => {
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Code de l'activité :</label>
-                <input type="text" placeholder="Ex: MED01ABC" className={`w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${activityCodeParam ? 'bg-gray-100' : ''}`} value={currentActivityCode} onChange={(e) => setCurrentActivityCode(e.target.value.toUpperCase())} readOnly={!!activityCodeParam} autoComplete="off" maxLength={8}/>
+                <input type="text" placeholder="SECU1" className={`w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${activityCodeParam ? 'bg-gray-100' : ''}`} value={currentActivityCode} onChange={(e) => setCurrentActivityCode(e.target.value.toUpperCase())} readOnly={!!activityCodeParam} autoComplete="off"/>
               </div>
             </div>
             <div className="space-y-4">

@@ -37,6 +37,7 @@ interface Activity {
   presentation_publique: string;
   description: string;
   encadrant: number;
+  type_affirmation_requise: number; // Ajouté pour la logique de mapping
   affirmations_associes: Affirmation[];
 }
 
@@ -188,14 +189,39 @@ export default function DebriefPage() {
 
   // Helper function to format response text
   const formatResponseText = (response: StudentResponse): string => {
-    if (response.affirmation.nbr_reponses === 2) {
-      // V/F format
-      return response.reponse_vf ? "Vrai" : "Faux";
-    } else if (response.affirmation.nbr_reponses === 4) {
-      // QCM format
-      const choices = ["Toujours faux", "Généralement faux", "Généralement vrai", "Toujours vrai"];
-      return choices[response.reponse_choisie_qcm! - 1] || "Non répondu";
+    if (!activity) {
+      return "Activité non trouvée";
     }
+
+    // Logique de conversion complexe similaire à la page de confirmation
+    if (response.affirmation.nbr_reponses === 2) {
+      // Données stockées en Vrai/Faux
+      if (activity.type_affirmation_requise === 2) {
+        // Interface était Vrai/Faux → affichage direct
+        return response.reponse_vf ? "Vrai" : "Faux";
+      } else if (activity.type_affirmation_requise === 4) {
+        // Interface était 4 niveaux mais stocké en Vrai/Faux → reconvertir
+        return response.reponse_vf ? "Toujours vrai" : "Toujours faux";
+      }
+    } else if (response.affirmation.nbr_reponses === 4) {
+      // Données stockées en QCM
+      const qcmMapping: { [key: number]: string } = {
+        1: "Toujours vrai",
+        2: "Généralement vrai",
+        3: "Généralement faux",
+        4: "Toujours faux"
+      };
+      
+      if (activity.type_affirmation_requise === 4) {
+        // Interface était 4 niveaux → affichage direct avec mapping
+        return qcmMapping[response.reponse_choisie_qcm!] || "Non répondu";
+      } else if (activity.type_affirmation_requise === 2) {
+        // Interface était Vrai/Faux mais stocké en QCM → reconvertir
+        if (response.reponse_choisie_qcm === 1 || response.reponse_choisie_qcm === 2) return "Vrai";
+        else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) return "Faux";
+      }
+    }
+    
     return "Format inconnu";
   };
 

@@ -23,16 +23,16 @@ class Categorie(models.Model):
 
 # --- Validator for code_activite ---
 code_activite_validator = RegexValidator(
-    regex=r'^[A-Z0-9]{1,8}$',
-    message='Le code activité doit contenir entre 1 et 8 caractères alphanumériques majuscules.',
+    regex=r'^[A-Z0-9]{1,9}$',
+    message='Le code activité doit contenir entre 1 et 9 caractères alphanumériques majuscules.',
     code='invalid_code_activite'
 )
 
 # --- Activite Model ---
 class Activite(models.Model):
     code_activite = models.CharField(
-        max_length=8, primary_key=True, validators=[code_activite_validator],
-        help_text="Code unique (1-8 caractères, A-Z, 0-9)."
+        max_length=9, primary_key=True, validators=[code_activite_validator],
+        help_text="Code unique (1-9 caractères, A-Z, 0-9)."
     )
     titre = models.CharField(max_length=255)
     presentation_publique = models.TextField(blank=True, null=True)
@@ -50,17 +50,6 @@ class Activite(models.Model):
         choices=CHOIX_TYPE_AFF,
         default=2,
         help_text="Définit le format des affirmations pour cette activité."
-    )
-    # Type d'apprenant choices
-    CHOIX_TYPE_APPRENANT = [
-        ('interne', 'Interne'),
-        ('externe', 'Externe')
-    ]
-    type_apprenant = models.CharField(
-        max_length=10,
-        choices=CHOIX_TYPE_APPRENANT,
-        default='interne',
-        help_text="Type d'apprenant ciblé par l'activité."
     )
     affirmations_associes = models.ManyToManyField(
         'Affirmation',
@@ -118,10 +107,10 @@ class Affirmation(models.Model):
         help_text="Format défini lors de la création pour une activité (2 ou 4)."
     )
 
-    # Pour Vrai/Faux (si nbr_reponses=2)
+    # Pour Vrai/Faux (si nbr_reponses=2) - OPTIONNEL, les affirmations sont neutres
     is_correct_vf = models.BooleanField(
-        null=True, blank=True, # Allow null only if nbr_reponses is 4
-        help_text="Est-ce vrai? (pour nbr_reponses=2)"
+        null=True, blank=True, # Toujours optionnel - les affirmations sont neutres
+        help_text="OPTIONNEL: Valeur de vérité (si l'encadrant souhaite l'indiquer)"
     )
 
     encadrant = models.ForeignKey(
@@ -132,11 +121,11 @@ class Affirmation(models.Model):
         related_name='affirmations_creees'
     )
 
-    # Pour 4 Choix Fixes (si nbr_reponses=4)
+    # Pour 4 Choix Fixes (si nbr_reponses=4) - OPTIONNEL, les affirmations sont neutres
     reponse_correcte_qcm = models.IntegerField(
         choices=CHOIX_NUMERO_REPONSE, # Refers to the index of the fixed choice
-        null=True, blank=True, # Allow null only if nbr_reponses is 2
-        help_text="Index (1-4) du choix fixe correct (pour nbr_reponses=4)."
+        null=True, blank=True, # Toujours optionnel - les affirmations sont neutres
+        help_text="OPTIONNEL: Index (1-4) du choix correct (si l'encadrant souhaite l'indiquer)"
     )
 
     # REMOVED option_1, option_2, option_3, option_4 fields
@@ -144,31 +133,16 @@ class Affirmation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
 
     def clean(self):
-        # Validation simplifiée : on autorise is_correct_vf pour tous les types
-        # Le type d'activité (nbr_reponses) détermine seulement l'interface de réponse
+        # Validation simplifiée : les affirmations sont maintenant neutres
+        # Seul le format (nbr_reponses) est requis pour déterminer l'interface
         
-        if self.nbr_reponses == 2:
-            if self.is_correct_vf is None:
-                raise ValidationError({'is_correct_vf': "Le statut Vrai/Faux (is_correct_vf) est requis si nbr_reponses=2."}) 
-            # Pour les réponses binaires, on peut optionnellement garder reponse_correcte_qcm à None
-            # mais on ne force plus
-            
-        elif self.nbr_reponses == 4:
-            # Pour les réponses graduées, on permet toujours is_correct_vf
-            # car les affirmations ont intrinsèquement une valeur de vérité
-            if self.is_correct_vf is None:
-                raise ValidationError({'is_correct_vf': "Le statut Vrai/Faux (is_correct_vf) est requis même pour les réponses graduées."}) 
-            # On peut optionnellement garder reponse_correcte_qcm mais ce n'est plus obligatoire
-            
-        elif self.nbr_reponses is None:
+        if self.nbr_reponses is None:
              raise ValidationError({"nbr_reponses": "Le format (nbr_reponses: 2 ou 4) est requis."})
-        else: # If nbr_reponses is something other than 2 or 4
+        elif self.nbr_reponses not in [2, 4]:
              raise ValidationError({"nbr_reponses": f"Format invalide ({self.nbr_reponses}). Doit être 2 ou 4."})
         
-        # Add validation for explanation if needed
-        # if self.is_correct_vf == False and not self.explication: 
-        #     # Only check if V/F and False? Needs refinement based on actual requirements.
-        #     raise ValidationError({'explication': "Une explication est recommandée pour les affirmations fausses."}) 
+        # Les champs is_correct_vf et reponse_correcte_qcm sont maintenant toujours optionnels
+        # Les affirmations sont neutres par défaut
 
         super().clean()
 
@@ -178,12 +152,12 @@ class Affirmation(models.Model):
 
     def __str__(self):
          format_type = f" ({self.get_nbr_reponses_display()})" if self.nbr_reponses else " (Format non défini)"
-         status = "[?]"
+         status = "[Neutre]"  # Les affirmations sont maintenant neutres par défaut
          if self.is_correct_vf is not None:
-             status = "Vrai" if self.is_correct_vf else "Faux"
+             status = f"[Encadrant: {'Vrai' if self.is_correct_vf else 'Faux'}]"
          elif self.nbr_reponses == 4 and self.reponse_correcte_qcm is not None:
-             status = f"4-Choix (Correct: {self.reponse_correcte_qcm})"
-         return f"Affirmation {self.id} {format_type} [{status}]: {self.affirmation[:60]}..."
+             status = f"[Encadrant: Choix {self.reponse_correcte_qcm}]"
+         return f"Affirmation {self.id} {format_type} {status}: {self.affirmation[:60]}..."
 
 # --- Reponse Model ---
 class Reponse(models.Model):
