@@ -235,31 +235,20 @@ export default function ActivitePage() {
           {activite.presentation_publique || 
            "Dans cette activité, vous allez être confrontés à une série d'affirmations sur les états de choc en réanimation. Il vous est demandé pour chacune d'entre-elles de (1) déterminer si elle est vraie ou fausse puis (2) d'expliquer succinctement votre raisonnement."}
         </p>
-        <div style={styles.card}>
-          <div style={styles.cardContent}>
-            <div style={styles.contentLeft}>
-              <h3 style={styles.cardTitle}>{activite.titre || "États de choc"}</h3>
-              <p style={styles.cardDescription}>
-                {activite.presentation_publique || 
-                "Dans cette activité, vous allez travailler sur des affirmations portant sur le diagnostic et la prise en charge des états de choc en réanimation. L'objectif est de vous faire réfléchir, de confronter vos connaissances, et de mieux comprendre les éléments clés pour gérer ces situations critiques."}
-              </p>
-              {activite.is_published === false && (
-                <div style={styles.unpublishedBox}>
-                  <p style={styles.unpublishedText}>
-                    📝 Cette activité est en brouillon et n'est pas encore publiée.
-                  </p>
-                </div>
-              )}
-              {activite.affirmations_associes && activite.affirmations_associes.length === 0 && (
-                <div style={styles.warningBox}>
-                  <p style={styles.warningText}>
-                    ⚠️ Cette activité ne contient aucune affirmation pour le moment.
-                  </p>
-                </div>
-              )}
-            </div>
+        {activite.is_published === false && (
+          <div style={styles.unpublishedBox}>
+            <p style={styles.unpublishedText}>
+              📝 Cette activité est en brouillon et n'est pas encore publiée.
+            </p>
           </div>
-        </div>
+        )}
+        {activite.affirmations_associes && activite.affirmations_associes.length === 0 && (
+          <div style={styles.warningBox}>
+            <p style={styles.warningText}>
+              ⚠️ Cette activité ne contient aucune affirmation pour le moment.
+            </p>
+          </div>
+        )}
         <button 
           style={styles.participateButton}
           onClick={handleStartActivity}

@@ -132,6 +132,7 @@ class ActiviteSerializer(serializers.ModelSerializer):
             'etudiants_emails', # NEW: Accept email list
             'type_affirmation_requise',
             'type_affirmation_requise_display',
+            'type_apprenant', # NEW: Type d'apprenant field
             'affirmations_associes',
             'affirmations_associes_ids',
             'nbr_affirmations_associe',
@@ -226,6 +227,7 @@ class ActiviteSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description', instance.description)
         instance.destine_a = validated_data.get('destine_a', instance.destine_a)
         instance.type_affirmation_requise = validated_data.get('type_affirmation_requise', instance.type_affirmation_requise)
+        instance.type_apprenant = validated_data.get('type_apprenant', instance.type_apprenant)  # NEW: Update type_apprenant
         instance.is_published = validated_data.get('is_published', instance.is_published) # Added is_published
 
         instance.save()
@@ -271,6 +273,9 @@ class ReponseSerializer(serializers.ModelSerializer):
 
         if reponse_vf is not None and reponse_qcm is not None:
              raise serializers.ValidationError("Réponse V/F et QCM fournies simultanément.") 
+             
+        # Allow "Je ne sais pas" responses (both values null) with optional justification
+        # No additional validation needed - null values are acceptable
         return data
 
 class ReponseSerializerGET(serializers.ModelSerializer):

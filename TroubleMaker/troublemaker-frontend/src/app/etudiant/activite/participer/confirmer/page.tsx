@@ -194,17 +194,34 @@ export default function Confirmer() {
           {currentAffirmations.map((affirmation, idx) => {
               const globalIndex = startIndex + idx;
               const response = reponses[affirmation.id];
-              const justification = response?.justification || "(Aucune explication fournie)";
+              const justification = response?.justification || "";
+              const hasJustification = justification.trim().length > 0;
               const isExpanded = expandedTexts[affirmation.id] || false;
               let displayAnswer = "Non répondu ou Je ne sais pas";
 
               if (response) {
                   if (activite.type_affirmation_requise === 2) {
-                      if (response.reponse_vf === true) displayAnswer = "Vrai";
-                      else if (response.reponse_vf === false) displayAnswer = "Faux";
+                      // For 2-option UI (Vrai/Faux)
+                      if (affirmation.nbr_reponses === 2) {
+                          // Direct mapping from boolean
+                          if (response.reponse_vf === true) displayAnswer = "Vrai";
+                          else if (response.reponse_vf === false) displayAnswer = "Faux";
+                      } else if (affirmation.nbr_reponses === 4) {
+                          // Convert from QCM values to Vrai/Faux
+                          if (response.reponse_choisie_qcm === 1 || response.reponse_choisie_qcm === 2) displayAnswer = "Vrai";
+                          else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) displayAnswer = "Faux";
+                      }
                   } else if (activite.type_affirmation_requise === 4) {
-                      if (response.reponse_choisie_qcm !== null && qcmNumberToText[response.reponse_choisie_qcm]) {
-                           displayAnswer = qcmNumberToText[response.reponse_choisie_qcm];
+                      // For 4-option UI (QCM scale)
+                      if (affirmation.nbr_reponses === 4) {
+                          // Direct mapping from QCM values
+                          if (response.reponse_choisie_qcm !== null && qcmNumberToText[response.reponse_choisie_qcm]) {
+                               displayAnswer = qcmNumberToText[response.reponse_choisie_qcm];
+                          }
+                      } else if (affirmation.nbr_reponses === 2) {
+                          // Convert from boolean to QCM scale
+                          if (response.reponse_vf === true) displayAnswer = "Toujours vrai";
+                          else if (response.reponse_vf === false) displayAnswer = "Toujours faux";
                       }
                   }
               }
@@ -228,19 +245,25 @@ export default function Confirmer() {
                           </div>
                           <div>
                               <span className="font-semibold">Votre explication: </span>
-                              <p className="mt-2 text-gray-600 whitespace-pre-wrap">
-                                  {isExpanded
-                                      ? justification
-                                      : justification.length > 150 ? justification.slice(0, 150) + "..." : justification
-                                  }
-                              </p>
-                              {justification.length > 150 && (
-                                  <button
-                                      onClick={() => toggleExpand(affirmation.id)}
-                                      className="text-blue-500 hover:text-blue-700 text-sm mt-2"
-                                  >
-                                      {isExpanded ? "Voir moins" : "Voir plus"}
-                                  </button>
+                              {hasJustification ? (
+                                  <>
+                                      <p className="mt-2 text-gray-600 whitespace-pre-wrap">
+                                          {isExpanded
+                                              ? justification
+                                              : justification.length > 150 ? justification.slice(0, 150) + "..." : justification
+                                          }
+                                      </p>
+                                      {justification.length > 150 && (
+                                          <button
+                                              onClick={() => toggleExpand(affirmation.id)}
+                                              className="text-blue-500 hover:text-blue-700 text-sm mt-2"
+                                          >
+                                              {isExpanded ? "Voir moins" : "Voir plus"}
+                                          </button>
+                                      )}
+                                  </>
+                              ) : (
+                                  <span className="text-gray-400 italic mt-2 block">Aucune explication fournie</span>
                               )}
                           </div>
                       </div>

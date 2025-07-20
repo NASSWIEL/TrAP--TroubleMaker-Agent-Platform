@@ -885,8 +885,11 @@ class AffirmationAPIView(APIView):
              return Response({"error": "Permission refusée."}, status=status.HTTP_403_FORBIDDEN)
 
         affirmation = get_object_or_404(Affirmation, pk=pk)
-        # Permission check: Encadrant must own at least one activity this affirmation is linked to
-        if not affirmation.activites.filter(encadrant=request.user).exists():
+        # Permission check: Encadrant must either be the creator OR own at least one activity this affirmation is linked to
+        is_creator = affirmation.encadrant == request.user
+        owns_linked_activity = affirmation.activites.filter(encadrant=request.user).exists()
+        
+        if not (is_creator or owns_linked_activity):
             return Response({"error": "Vous n'avez pas la permission de modifier cette affirmation."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = AffirmationSerializer(affirmation, data=request.data, partial=True)
@@ -901,8 +904,11 @@ class AffirmationAPIView(APIView):
              return Response({"error": "Permission refusée."}, status=status.HTTP_403_FORBIDDEN)
 
         affirmation = get_object_or_404(Affirmation, pk=pk)
-        # Permission check
-        if not affirmation.activites.filter(encadrant=request.user).exists():
+        # Permission check: Encadrant must either be the creator OR own at least one activity this affirmation is linked to
+        is_creator = affirmation.encadrant == request.user
+        owns_linked_activity = affirmation.activites.filter(encadrant=request.user).exists()
+        
+        if not (is_creator or owns_linked_activity):
              return Response({"error": "Vous n'avez pas la permission de supprimer cette affirmation."}, status=status.HTTP_403_FORBIDDEN)
 
         # Consider implications: If deleted, it's removed from ALL activities it was linked to.

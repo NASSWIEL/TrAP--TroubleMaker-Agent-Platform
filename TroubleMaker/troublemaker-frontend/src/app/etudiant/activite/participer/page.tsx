@@ -59,10 +59,11 @@ export default function Participer() {
   const [submittedResponses, setSubmittedResponses] = useState<Record<number, ReponseApiData>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const vraiFauxOptions = ["Vrai", "Faux", "Je ne sais pas"];
-  const qcmValues = ["1", "2", "3", "4", "Je ne sais pas"];
+  const vraiFauxOptions = ["Vrai", "Faux"];
+  const qcmValues = ["1", "2", "3", "4"];
 
   const mapLocalToApiResponse = useCallback((localResp: LocalResponse, affirmation: AffirmationApi, activite: ActiviteApiData): Partial<ReponseApiData> => {
       const apiPayload: Partial<ReponseApiData> = {
@@ -81,12 +82,14 @@ export default function Participer() {
               // UI shows Vrai/Faux, direct mapping
               if (selection === "Vrai") apiPayload.reponse_vf = true;
               else if (selection === "Faux") apiPayload.reponse_vf = false;
+              // "Je ne sais pas" leaves it as null
           } else if (activite.type_affirmation_requise === 4) {
               // UI shows 4-level scale, convert to True/False
               // 1,2 = Vrai, 3,4 = Faux
               const qcmValue = parseInt(selection, 10);
               if (qcmValue === 1 || qcmValue === 2) apiPayload.reponse_vf = true;
               else if (qcmValue === 3 || qcmValue === 4) apiPayload.reponse_vf = false;
+              // "Je ne sais pas" (non-numeric) leaves it as null
           }
       } else if (affirmation.nbr_reponses === 4) {
           // Backend expects QCM response
@@ -96,11 +99,14 @@ export default function Participer() {
               if (!isNaN(qcmValue) && qcmValue >= 1 && qcmValue <= 4) {
                   apiPayload.reponse_choisie_qcm = qcmValue;
               }
+              // "Je ne sais pas" (non-numeric) leaves it as null
           } else if (activite.type_affirmation_requise === 2) {
               // UI shows Vrai/Faux, convert to QCM scale
               // Vrai = 1 (Toujours vrai), Faux = 4 (Toujours faux)
+              // "Je ne sais pas" -> null (will be handled as null)
               if (selection === "Vrai") apiPayload.reponse_choisie_qcm = 1;
               else if (selection === "Faux") apiPayload.reponse_choisie_qcm = 4;
+              // "Je ne sais pas" leaves it as null
           }
       }
       return apiPayload;
@@ -146,6 +152,13 @@ export default function Participer() {
   useEffect(() => {
     if (!activityCode) {
       setError("Code d'activité manquant dans l'URL.");
+      setLoading(false);
+      return;
+    }
+
+    // Validation du format du code d'activité
+    if (!/^[A-Z0-9]{1,8}$/i.test(activityCode)) {
+      setError("Format du code d'activité invalide. Le code doit contenir entre 1 et 8 caractères alphanumériques.");
       setLoading(false);
       return;
     }
@@ -205,6 +218,42 @@ export default function Participer() {
     field: keyof LocalResponse,
     value: string
   ) => {
+    // Clear validation error when user interacts
+    if (validationError) setValidationError(null);
+    
+    // Validation des données d'entrée
+    if (affirmationIndex < 0 || !activite || affirmationIndex >= activite.affirmations_associes.length) {
+      console.error("Index d'affirmation invalide:", affirmationIndex);
+      return;
+    }
+
+    // Validation de la justification
+    if (field === 'pourquoi') {
+      if (value.length > 1000) {
+        setValidationError("La justification ne peut pas dépasser 1000 caractères.");
+        return;
+      }
+      // La justification est optionnelle - pas de validation de longueur minimale
+      setValidationError(null);
+    }
+
+    // Validation des réponses
+    if (field === 'reponseSelection') {
+      const affirmation = activite.affirmations_associes[affirmationIndex];
+      if (activite.type_affirmation_requise === 2) {
+        if (!vraiFauxOptions.includes(value) && value !== "Je ne sais pas") {
+          setValidationError("Veuillez sélectionner une réponse valide.");
+          return;
+        }
+      } else if (activite.type_affirmation_requise === 4) {
+        if (!qcmValues.includes(value) && value !== "Je ne sais pas") {
+          setValidationError("Veuillez sélectionner une réponse valide.");
+          return;
+        }
+      }
+      setValidationError(null);
+    }
+
     setLocalResponses((prev) => ({
       ...prev,
       [affirmationIndex]: {
@@ -216,14 +265,42 @@ export default function Participer() {
   };
 
   const submitCurrentResponse = useCallback(async (indexToSubmit: number): Promise<{ success: boolean; data: ReponseApiData | null }> => {
-      if (!activite || !activityCode || !activite.affirmations_associes[indexToSubmit]) return { success: false, data: null };
+      // Validation des paramètres d'entrée
+      if (!activite || !activityCode || !activite.affirmations_associes[indexToSubmit]) {
+        console.error("Données invalides pour la soumission:", { activite: !!activite, activityCode, indexValid: !!activite?.affirmations_associes[indexToSubmit] });
+        return { success: false, data: null };
+      }
+
+      // Validation de l'index
+      if (indexToSubmit < 0 || indexToSubmit >= activite.affirmations_associes.length) {
+        console.error("Index de soumission invalide:", indexToSubmit);
+        return { success: false, data: null };
+      }
 
       const affirmation = activite.affirmations_associes[indexToSubmit];
       const localResponse = localResponses[indexToSubmit];
       const effectiveLocalResponse = localResponse || { reponseSelection: 'Je ne sais pas', pourquoi: '' };
+      
+      // Validation de la réponse locale
+      if (effectiveLocalResponse.pourquoi && effectiveLocalResponse.pourquoi.length > 1000) {
+        setError("La justification ne peut pas dépasser 1000 caractères.");
+        return { success: false, data: null };
+      }
+
       const submitted = submittedResponses[indexToSubmit];
       const apiPayload = mapLocalToApiResponse(effectiveLocalResponse, affirmation, activite);
       const currentExistingId = submitted?.id;
+
+      // Validation du payload API
+      if (!activityCode.match(/^[A-Z0-9]{1,8}$/i)) {
+        setError("Code d'activité invalide.");
+        return { success: false, data: null };
+      }
+
+      if (!Number.isInteger(affirmation.id) || affirmation.id <= 0) {
+        setError("ID d'affirmation invalide.");
+        return { success: false, data: null };
+      }
 
       let needsApiCall = false;
       if (currentExistingId) {
@@ -231,9 +308,8 @@ export default function Participer() {
                          apiPayload.reponse_choisie_qcm !== submitted.reponse_choisie_qcm ||
                          apiPayload.justification !== submitted.justification;
       } else {
-          needsApiCall = apiPayload.reponse_vf !== null ||
-                         apiPayload.reponse_choisie_qcm !== null ||
-                         (apiPayload.justification !== null && apiPayload.justification !== "");
+          // Always save if there's any response, including "Je ne sais pas"
+          needsApiCall = true;
       }
 
       if (!needsApiCall) {
@@ -299,8 +375,55 @@ export default function Participer() {
 
  const handleFinalSubmit = async () => {
     if (!activite || !activityCode || isSubmitting) return;
-    setIsSubmitting(true);
+    
+    // Clear any previous errors
     setError(null);
+    setValidationError(null);
+    
+    // Validation du code d'activité avant soumission finale
+    if (!activityCode.match(/^[A-Z0-9]{1,8}$/i)) {
+      setValidationError("Code d'activité invalide.");
+      return;
+    }
+
+    // Validation détaillée que toutes les affirmations ont des réponses valides
+    const missingResponses: number[] = [];
+    const invalidResponses: number[] = [];
+    
+    activite.affirmations_associes.forEach((affirmation, index) => {
+      const localResponse = localResponses[index];
+      
+      if (!localResponse || !localResponse.reponseSelection) {
+        missingResponses.push(index + 1);
+        return;
+      }
+      
+      // Vérifier que la réponse est valide selon le type
+      const validOptions = activite.type_affirmation_requise === 2 
+        ? [...vraiFauxOptions, "Je ne sais pas"]
+        : [...qcmValues, "Je ne sais pas"];
+        
+      if (!validOptions.includes(localResponse.reponseSelection)) {
+        invalidResponses.push(index + 1);
+      }
+      
+      // La justification est optionnelle - pas de validation
+    });
+
+    // Messages d'erreur détaillés
+    if (missingResponses.length > 0) {
+      setValidationError(`Veuillez répondre à l'affirmation ${missingResponses.length === 1 ? '' : 's'} ${missingResponses.join(', ')}.`);
+      setCurrentAffirmationIndex(missingResponses[0] - 1);
+      return;
+    }
+    
+    if (invalidResponses.length > 0) {
+      setValidationError(`Réponse${invalidResponses.length === 1 ? '' : 's'} invalide${invalidResponses.length === 1 ? '' : 's'} pour l'affirmation ${invalidResponses.length === 1 ? '' : 's'} ${invalidResponses.join(', ')}.`);
+      setCurrentAffirmationIndex(invalidResponses[0] - 1);
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const finalIndex = currentAffirmationIndex;
     const lastSubmissionResult = await submitCurrentResponse(finalIndex);
@@ -315,7 +438,8 @@ export default function Participer() {
 
     const allSubmitted = activite.affirmations_associes.every((affirmation, index) => {
         const responseData = currentSubmittedStateSnapshot[index];
-        const submittedSuccessfully = responseData && responseData.id;
+        // Consider a response submitted if it exists (even with null values for "Je ne sais pas")
+        const submittedSuccessfully = responseData && (responseData.id || responseData.id === 0);
         if (!submittedSuccessfully && firstMissingIndex === -1) {
             firstMissingIndex = index;
         }
@@ -323,7 +447,7 @@ export default function Participer() {
     });
 
     if (!allSubmitted) {
-        alert(`Veuillez répondre à toutes les affirmations avant de terminer. Problème détecté autour de l'affirmation ${firstMissingIndex + 1}. Assurez-vous que chaque réponse a été enregistrée.`);
+        setValidationError(`Veuillez répondre à toutes les affirmations avant de terminer. Problème détecté autour de l'affirmation ${firstMissingIndex + 1}. Assurez-vous que chaque réponse a été enregistrée.`);
         if(firstMissingIndex !== -1 && firstMissingIndex !== currentAffirmationIndex) {
             setCurrentAffirmationIndex(firstMissingIndex);
         }
@@ -401,6 +525,16 @@ export default function Participer() {
           </div>
         </div>
         {error && <p className="text-red-600 text-base mb-4 text-center">{error}</p>}
+        {validationError && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-yellow-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-yellow-800 text-sm">{validationError}</p>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-6">
           <div className="bg-gray-50 p-6 rounded-lg">
@@ -442,15 +576,37 @@ export default function Participer() {
               </div>
             </RadioGroup>
 
-            <Textarea
-              id={`explication-${currentAffirmationIndex}`}
-              placeholder="Expliquez votre réponse ..."
-              value={localResponses[currentAffirmationIndex]?.pourquoi || ""}
-              onChange={(e) => handleLocalResponseChange(currentAffirmationIndex, "pourquoi", e.target.value)}
-              style={{ fontSize: '25px' }} 
-              className="mt-6 w-full min-h-[120px] p-3 border border-gray-300 rounded-md"
-              disabled={isSubmitting}
-            />
+            <div className="mt-6">
+              <Textarea
+                id={`explication-${currentAffirmationIndex}`}
+                placeholder="Expliquez votre réponse (optionnel)..."
+                value={localResponses[currentAffirmationIndex]?.pourquoi || ""}
+                onChange={(e) => handleLocalResponseChange(currentAffirmationIndex, "pourquoi", e.target.value)}
+                style={{ fontSize: '25px' }} 
+                className={`w-full min-h-[120px] p-3 rounded-md transition-colors ${
+                  (localResponses[currentAffirmationIndex]?.pourquoi || "").length > 900
+                    ? 'border-2 border-yellow-300 bg-yellow-50'
+                    : 'border border-gray-300'
+                }`}
+                disabled={isSubmitting}
+                maxLength={1000}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <span className={`text-sm ${
+                  (localResponses[currentAffirmationIndex]?.pourquoi || "").length > 900 
+                    ? 'text-red-600 font-medium' 
+                    : 'text-gray-500'
+                }`}>
+                  {(localResponses[currentAffirmationIndex]?.pourquoi || "").length}/1000 caractères
+                  {(localResponses[currentAffirmationIndex]?.pourquoi || "").length === 0 && (
+                    <span className="ml-2 text-gray-400">(optionnel)</span>
+                  )}
+                </span>
+                {(localResponses[currentAffirmationIndex]?.pourquoi || "").length > 900 && (
+                  <span className="text-red-600 text-sm font-medium">⚠️ Limite bientôt atteinte</span>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="text-center mb-4">

@@ -23,16 +23,16 @@ class Categorie(models.Model):
 
 # --- Validator for code_activite ---
 code_activite_validator = RegexValidator(
-    regex=r'^[A-Z0-9]{1,5}$',
-    message='Le code activité doit contenir entre 1 et 5 caractères alphanumériques majuscules.',
+    regex=r'^[A-Z0-9]{1,8}$',
+    message='Le code activité doit contenir entre 1 et 8 caractères alphanumériques majuscules.',
     code='invalid_code_activite'
 )
 
 # --- Activite Model ---
 class Activite(models.Model):
     code_activite = models.CharField(
-        max_length=5, primary_key=True, validators=[code_activite_validator],
-        help_text="Code unique (1-5 caractères, A-Z, 0-9)."
+        max_length=8, primary_key=True, validators=[code_activite_validator],
+        help_text="Code unique (1-8 caractères, A-Z, 0-9)."
     )
     titre = models.CharField(max_length=255)
     presentation_publique = models.TextField(blank=True, null=True)
@@ -50,6 +50,17 @@ class Activite(models.Model):
         choices=CHOIX_TYPE_AFF,
         default=2,
         help_text="Définit le format des affirmations pour cette activité."
+    )
+    # Type d'apprenant choices
+    CHOIX_TYPE_APPRENANT = [
+        ('interne', 'Interne'),
+        ('externe', 'Externe')
+    ]
+    type_apprenant = models.CharField(
+        max_length=10,
+        choices=CHOIX_TYPE_APPRENANT,
+        default='interne',
+        help_text="Type d'apprenant ciblé par l'activité."
     )
     affirmations_associes = models.ManyToManyField(
         'Affirmation',

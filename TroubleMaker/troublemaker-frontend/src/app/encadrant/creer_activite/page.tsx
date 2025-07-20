@@ -43,6 +43,7 @@ interface FormState {
   training: string;
   selectedCategoryId: number | null;
   newCategoryName: string;
+  formationInput: string;
   selectedAffirmations: Affirmation[];
   searchQuery: string;
 }
@@ -64,6 +65,7 @@ const usePersistedFormState = () => {
     training: "",
     selectedCategoryId: null,
     newCategoryName: "",
+    formationInput: "",
     selectedAffirmations: [],
     searchQuery: "",
   });
@@ -113,6 +115,7 @@ const usePersistedFormState = () => {
         training: "",
         selectedCategoryId: null,
         newCategoryName: "",
+        formationInput: "",
         selectedAffirmations: [],
         searchQuery: "",
       });
@@ -158,6 +161,7 @@ const GererActivites = () => {
     setSearchQuery(formState.searchQuery);
     setSelectedCategoryId(formState.selectedCategoryId);
     setNewCategoryName(formState.newCategoryName);
+    setFormationInput(formState.formationInput);
   }, [formState]);
 
   // Wrapper functions to update state and persist to localStorage
@@ -167,8 +171,8 @@ const GererActivites = () => {
   };
 
   const updateActivityCode = (value: string) => {
-    // Only allow alphanumeric characters, limit to 5 characters and convert to uppercase
-    const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 5);
+    // Only allow alphanumeric characters, limit to 8 characters and convert to uppercase
+    const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
     setActivityCode(sanitizedValue);
     saveFormState({ activityCode: sanitizedValue });
   };
@@ -221,6 +225,57 @@ const GererActivites = () => {
   const updateNewCategoryName = (value: string) => {
     setNewCategoryName(value);
     saveFormState({ newCategoryName: value });
+  };
+
+  // State for the searchable formation input
+  const [formationInput, setFormationInput] = useState(formState.formationInput);
+  const [showFormationDropdown, setShowFormationDropdown] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState<Categorie[]>([]);
+
+  // Update formation input and filter categories
+  const updateFormationInput = (value: string) => {
+    setFormationInput(value);
+    
+    // Filter existing categories based on input
+    const filtered = categories.filter(cat => 
+      cat.nom.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredCategories(filtered);
+    
+    // Show dropdown if there's input and matches
+    setShowFormationDropdown(value.length > 0);
+    
+    // Check if input exactly matches an existing category
+    const exactMatch = categories.find(cat => 
+      cat.nom.toLowerCase() === value.toLowerCase()
+    );
+    
+    if (exactMatch) {
+      setSelectedCategoryId(exactMatch.id);
+      setNewCategoryName('');
+    } else {
+      setSelectedCategoryId(null);
+      setNewCategoryName(value);
+    }
+    
+    saveFormState({ 
+      formationInput: value,
+      selectedCategoryId: exactMatch ? exactMatch.id : null,
+      newCategoryName: exactMatch ? '' : value
+    });
+  };
+
+  // Handle category selection from dropdown
+  const selectCategory = (category: Categorie) => {
+    setFormationInput(category.nom);
+    setSelectedCategoryId(category.id);
+    setNewCategoryName('');
+    setShowFormationDropdown(false);
+    saveFormState({ 
+      formationInput: category.nom,
+      selectedCategoryId: category.id,
+      newCategoryName: ''
+    });
   };
 
   const [error, setError] = useState<string | null>(null); // State for error messages
@@ -317,6 +372,18 @@ const GererActivites = () => {
 
     fetchCategories();
   }, []);
+
+  // Initialize formation input from persisted state
+  useEffect(() => {
+    if (selectedCategoryId && categories.length > 0) {
+      const category = categories.find(cat => cat.id === selectedCategoryId);
+      if (category) {
+        setFormationInput(category.nom);
+      }
+    } else if (newCategoryName) {
+      setFormationInput(newCategoryName);
+    }
+  }, [categories, selectedCategoryId, newCategoryName]);
 
   // Fonctions utilitaires pour l'affichage des boutons d'affirmation
   const getAffirmationButtonColor = (affirmation: Affirmation) => {
@@ -522,8 +589,8 @@ const GererActivites = () => {
       return;
     }
 
-    if (activityCode.length > 5) {
-      setError("Le code de l'activité ne peut pas dépasser 5 caractères.");
+    if (activityCode.length > 8) {
+      setError("Le code de l'activité ne peut pas dépasser 8 caractères.");
       setIsSubmitting(false);
       return;
     }
@@ -534,16 +601,9 @@ const GererActivites = () => {
       return;
     }
 
-    // Validate category input - either select existing or create new
-    if (!selectedCategoryId && !newCategoryName.trim()) {
-      setError("Veuillez soit sélectionner une formation existante, soit en créer une nouvelle.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // If both are provided, prioritize new category creation
-    if (selectedCategoryId && newCategoryName.trim()) {
-      setError("Veuillez choisir soit de sélectionner une formation existante, soit de créer une nouvelle, mais pas les deux.");
+    // Validate category input - require formation input
+    if (!formationInput.trim()) {
+      setError("Veuillez saisir une formation.");
       setIsSubmitting(false);
       return;
     }
@@ -586,6 +646,7 @@ const GererActivites = () => {
       presentation_publique: publicPresentation,
       description: description,
       type_affirmation_requise: responseCount, // Send the response type instead of degre_veracite
+      type_apprenant: learnerType, // Send the learner type
       // Include associated affirmations IDs for backend
       affirmations_associes_ids: selectedAffirmations.map(a => a.id),
       // Send the email list to backend for student user creation
@@ -711,10 +772,20 @@ const GererActivites = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
       {/* Titre de la page */}
-      <header className="bg-white shadow-md p-4 mb-6 flex justify-center relative">
+      <header className="bg-white shadow-md p-4 mb-6 flex justify-between items-center">
+        {/* Bouton retour au menu principal */}
+        <button
+          onClick={() => router.push('/encadrant/liste_activite')}
+          className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center space-x-2"
+        >
+          <span>←</span>
+          <span>Menu Principal</span>
+        </button>
+        
         <h1 className="text-4xl font-bold text-gray-800">Créer une Activité</h1>
+        
         {/* Form auto-save indicator */}
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
           <span className="text-sm text-gray-600">Sauvegarde automatique</span>
         </div>
@@ -785,43 +856,43 @@ const GererActivites = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Formation concernée :</label>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Créer une nouvelle formation :</label>
-                    <input
-                      type="text"
-                      placeholder="Nom de la nouvelle formation"
-                      className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newCategoryName}
-                      onChange={(e) => updateNewCategoryName(e.target.value)}
-                    />
-                  </div>
-                  {categories.length > 0 && (
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Ou sélectionner une formation existante :</label>
-                      {loadingCategories ? (
-                        <div className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md bg-gray-100">
-                          Chargement des catégories...
-                        </div>
-                      ) : (
-                        <select
-                          className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          value={selectedCategoryId || ""}
-                          onChange={(e) => {
-                            updateSelectedCategoryId(e.target.value ? parseInt(e.target.value) : null);
-                            if (e.target.value) updateNewCategoryName("");
-                          }}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Tapez pour rechercher ou créer une formation..."
+                    className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formationInput}
+                    onChange={(e) => updateFormationInput(e.target.value)}
+                    onFocus={() => setShowFormationDropdown(formationInput.length > 0)}
+                    onBlur={() => {
+                      // Delay hiding dropdown to allow clicks on dropdown items
+                      setTimeout(() => setShowFormationDropdown(false), 200);
+                    }}
+                  />
+                  
+                  {/* Dropdown with filtered categories */}
+                  {showFormationDropdown && filteredCategories.length > 0 && (
+                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                      {filteredCategories.map((category) => (
+                        <div
+                          key={category.id}
+                          className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-base"
+                          onClick={() => selectCategory(category)}
                         >
-                          <option value="">Sélectionnez une formation</option>
-                          {categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.nom}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                          {category.nom}
+                        </div>
+                      ))}
                     </div>
                   )}
+                  
+                  {/* Status indicator */}
+                  <div className="mt-1 text-sm">
+                    {selectedCategoryId ? (
+                      <span className="text-green-600">✓ Formation existante sélectionnée</span>
+                    ) : formationInput.trim() ? (
+                      <span className="text-blue-600">💡 Nouvelle formation sera créée</span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -839,22 +910,22 @@ const GererActivites = () => {
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">
                   Code de l'activité :
-                  <span className="text-sm text-gray-500 font-normal ml-2">(max 5 caractères, A-Z et 0-9 seulement)</span>
+                  <span className="text-sm text-gray-500 font-normal ml-2">(max 8 caractères, A-Z et 0-9 seulement)</span>
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Ex: MED01"
+                    placeholder="Ex: MED01ABC"
                     className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider"
                     value={activityCode}
                     onChange={(e) => updateActivityCode(e.target.value)}
-                    maxLength={5}
+                    maxLength={8}
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                    {activityCode.length}/5
+                    {activityCode.length}/8
                   </div>
                 </div>
-                {activityCode.length === 5 && (
+                {activityCode.length === 8 && (
                   <p className="text-sm text-orange-600 mt-1">✓ Limite de caractères atteinte</p>
                 )}
                 {activityCode.length > 0 && activityCode.length < 3 && (

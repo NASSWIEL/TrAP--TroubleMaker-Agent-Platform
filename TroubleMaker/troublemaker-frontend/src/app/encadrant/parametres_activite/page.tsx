@@ -31,6 +31,7 @@ interface Activity {
   presentation_publique: string;
   description: string;
   type_affirmation_requise: number;
+  type_apprenant?: string;
   is_published: boolean;
   destine_a?: Categorie; // Catégorie liée à l'activité
   destine_a_id?: number; // ID de la catégorie pour les mises à jour
@@ -56,10 +57,53 @@ const GererActivites = () => {
   const [isPublished, setIsPublished] = useState(false);
   const [etudiantsAutorisesEmails, setEtudiantsAutorisesEmails] = useState(""); // For the textarea display
 
+  // État pour le type d'apprenant
+  const [learnerType, setLearnerType] = useState("interne");
+
   // États pour les catégories
   const [allCategories, setAllCategories] = useState<Categorie[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
+
+  // State for the searchable formation input
+  const [formationInput, setFormationInput] = useState('');
+  const [showFormationDropdown, setShowFormationDropdown] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState<Categorie[]>([]);
+
+  // Update formation input and filter categories
+  const updateFormationInput = (value: string) => {
+    setFormationInput(value);
+    
+    // Filter existing categories based on input
+    const filtered = allCategories.filter(cat => 
+      cat.nom.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredCategories(filtered);
+    
+    // Show dropdown if there's input and matches
+    setShowFormationDropdown(value.length > 0);
+    
+    // Check if input exactly matches an existing category
+    const exactMatch = allCategories.find(cat => 
+      cat.nom.toLowerCase() === value.toLowerCase()
+    );
+    
+    if (exactMatch) {
+      setSelectedCategoryId(exactMatch.id);
+      setNewCategoryName('');
+    } else {
+      setSelectedCategoryId(null);
+      setNewCategoryName(value);
+    }
+  };
+
+  // Handle category selection from dropdown
+  const selectCategory = (category: Categorie) => {
+    setFormationInput(category.nom);
+    setSelectedCategoryId(category.id);
+    setNewCategoryName('');
+    setShowFormationDropdown(false);
+  };
 
   // États supprimés car pas dans le modèle Django
   // const [learnerType, setLearnerType] = useState("interne");
@@ -106,6 +150,7 @@ const GererActivites = () => {
         setDescription(data.description || "");
         setTypeAffirmationRequise(data.type_affirmation_requise || 2);
         setIsPublished(data.is_published || false);
+        setLearnerType(data.type_apprenant || "interne");
         
         // Charger la catégorie sélectionnée (Formation concernée)
         if (data.destine_a) {
@@ -165,6 +210,18 @@ const GererActivites = () => {
       })
       .catch((error) => console.error("Error fetching categories:", error.message));
   }, []);
+
+  // Initialize formation input from loaded data
+  useEffect(() => {
+    if (selectedCategoryId && allCategories.length > 0) {
+      const category = allCategories.find(cat => cat.id === selectedCategoryId);
+      if (category) {
+        setFormationInput(category.nom);
+      }
+    } else if (newCategoryName) {
+      setFormationInput(newCategoryName);
+    }
+  }, [allCategories, selectedCategoryId, newCategoryName]);
 
   // Secondary useEffect to fetch ALL affirmations for the database list
   useEffect(() => {
@@ -431,9 +488,9 @@ const GererActivites = () => {
         return;
     }
 
-    // Validate category input - either select existing or create new
-    if (!selectedCategoryId && !newCategoryName.trim()) {
-      alert("Veuillez soit sélectionner une formation existante, soit en créer une nouvelle.");
+    // Validate category input - require formation input
+    if (!formationInput.trim()) {
+      alert("Veuillez saisir une formation.");
       return;
     }
 
@@ -481,6 +538,7 @@ const GererActivites = () => {
       presentation_publique: publicPresentation,
       description: description,
       type_affirmation_requise: typeAffirmationRequise,
+      type_apprenant: learnerType,
       is_published: newIsPublishedState,
       destine_a_id: categoryIdToUse || undefined, // Use the category ID (either existing or newly created)
       // Send IDs for write operations
@@ -520,8 +578,23 @@ const GererActivites = () => {
             ? (savedActivity.is_published ? 'lancée' : 'retirée de publication') 
             : (method === 'POST' ? 'créée' : 'enregistrée');
         alert(`Activité ${actionVerb} avec succès ! Code: ${savedActivity.code_activite}`);
+        
+        // Update all states with the saved activity data from server
         setIsPublished(savedActivity.is_published); 
         setCurrentActivityCode(savedActivity.code_activite);
+        setActivityTitle(savedActivity.titre || '');
+        setPublicPresentation(savedActivity.presentation_publique || '');
+        setDescription(savedActivity.description || '');
+        setTypeAffirmationRequise(savedActivity.type_affirmation_requise || 2);
+        setSelectedCategoryId(savedActivity.destine_a_id || null);
+        setLearnerType(savedActivity.type_apprenant || "interne");
+        setEtudiantsAutorisesEmails(savedActivity.etudiants_autorises?.map(e => e.email).join(', ') || '');
+        setSelectedAffirmations(savedActivity.affirmations_associes || []);
+        
+        if (savedActivity.destine_a) {
+          setFormationInput(savedActivity.destine_a.nom);
+        }
+        
         // If it was a new creation, update URL to reflect the new code for editing mode
         if (!activityCodeParam && method === 'POST') {
             router.replace(`/encadrant/parametres_activite?code=${savedActivity.code_activite}`);
@@ -598,10 +671,22 @@ const GererActivites = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
-      <header className="bg-white shadow-md p-4 mb-6 flex justify-center">
+      <header className="bg-white shadow-md p-4 mb-6 flex justify-between items-center">
+        {/* Bouton retour au menu principal */}
+        <button
+          onClick={() => router.push('/encadrant/liste_activite')}
+          className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center space-x-2"
+        >
+          <span>←</span>
+          <span>Menu Principal</span>
+        </button>
+        
         <h1 className="text-4xl font-bold text-gray-800">
           {activityCodeParam ? "Paramètres de l'Activité" : "Créer une Activité"}
         </h1>
+        
+        {/* Espace pour équilibrer le layout */}
+        <div className="w-32"></div>
       </header>
 
       <div className="space-y-6">
@@ -613,51 +698,68 @@ const GererActivites = () => {
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Type d'apprenant :</label>
                 <div className="flex space-x-4">
                   <label className="flex items-center space-x-2 text-lg">
-                    <input type="radio" name="learnerType" value="interne" defaultChecked className="w-4 h-4"/>
+                    <input 
+                      type="radio" 
+                      name="learnerType" 
+                      value="interne" 
+                      checked={learnerType === "interne"}
+                      onChange={(e) => setLearnerType(e.target.value)}
+                      className="w-4 h-4"
+                    />
                     <span>Interne</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
-                    <input type="radio" name="learnerType" value="externe" className="w-4 h-4"/>
+                    <input 
+                      type="radio" 
+                      name="learnerType" 
+                      value="externe" 
+                      checked={learnerType === "externe"}
+                      onChange={(e) => setLearnerType(e.target.value)}
+                      className="w-4 h-4"
+                    />
                     <span>Externe</span>
                   </label>
                 </div>
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Formation concernée :</label>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Créer une nouvelle formation :</label>
-                    <input
-                      type="text"
-                      placeholder="Nom de la nouvelle formation"
-                      className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newCategoryName}
-                      onChange={(e) => {
-                        setNewCategoryName(e.target.value);
-                        if (e.target.value.trim()) setSelectedCategoryId(null);
-                      }}
-                    />
-                  </div>
-                  {allCategories.length > 0 && (
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Ou sélectionner une formation existante :</label>
-                      <select 
-                        className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        value={selectedCategoryId || ""} 
-                        onChange={(e) => {
-                          setSelectedCategoryId(e.target.value ? parseInt(e.target.value) : null);
-                          if (e.target.value) setNewCategoryName("");
-                        }}
-                      >
-                        <option value="">Sélectionner une formation...</option>
-                        {allCategories.map(category => (
-                          <option key={category.id} value={category.id}>
-                            {category.nom}
-                          </option>
-                        ))}
-                      </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Tapez pour rechercher ou créer une formation..."
+                    className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formationInput}
+                    onChange={(e) => updateFormationInput(e.target.value)}
+                    onFocus={() => setShowFormationDropdown(formationInput.length > 0)}
+                    onBlur={() => {
+                      // Delay hiding dropdown to allow clicks on dropdown items
+                      setTimeout(() => setShowFormationDropdown(false), 200);
+                    }}
+                  />
+                  
+                  {/* Dropdown with filtered categories */}
+                  {showFormationDropdown && filteredCategories.length > 0 && (
+                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                      {filteredCategories.map((category) => (
+                        <div
+                          key={category.id}
+                          className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-base"
+                          onClick={() => selectCategory(category)}
+                        >
+                          {category.nom}
+                        </div>
+                      ))}
                     </div>
                   )}
+                  
+                  {/* Status indicator */}
+                  <div className="mt-1 text-sm">
+                    {selectedCategoryId ? (
+                      <span className="text-green-600">✓ Formation existante sélectionnée</span>
+                    ) : formationInput.trim() ? (
+                      <span className="text-blue-600">💡 Nouvelle formation sera créée</span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               <div>
@@ -666,7 +768,7 @@ const GererActivites = () => {
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">Code de l'activité :</label>
-                <input type="text" placeholder="SECU1" className={`w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${activityCodeParam ? 'bg-gray-100' : ''}`} value={currentActivityCode} onChange={(e) => setCurrentActivityCode(e.target.value.toUpperCase())} readOnly={!!activityCodeParam} autoComplete="off"/>
+                <input type="text" placeholder="Ex: MED01ABC" className={`w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${activityCodeParam ? 'bg-gray-100' : ''}`} value={currentActivityCode} onChange={(e) => setCurrentActivityCode(e.target.value.toUpperCase())} readOnly={!!activityCodeParam} autoComplete="off" maxLength={8}/>
               </div>
             </div>
             <div className="space-y-4">
