@@ -62,7 +62,7 @@ If you prefer manual setup or need more control:
    ```
 3. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r ../../req.txt
    ```
 4. Run migrations:
    ```bash
