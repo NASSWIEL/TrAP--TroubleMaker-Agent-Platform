@@ -119,10 +119,5 @@ The project includes several utility scripts to simplify development:
   - Starts the Django development server
   - Can be configured with custom port via `$PORT` environment variable
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run the dependency checker to ensure all requirements are met
-5. Submit a pull request
+## License
+this project is licensed under the AGPL-3.0 License. See the [LICENSE](LICENSE) file for details.
