@@ -1,6 +1,16 @@
 # TroubleMaker - Integrated Application
 
-A full-stack application with Django REST API backend and Next.js frontend.
+This repository contains the code for the published paper: [Making Hallucinations Useful: A Reassessment of the Troublemaker Agent Strategy in the Age of Generative AI](https://link.springer.com/chapter/10.1007/978-3-031-99264-3_36).
+
+## Project Overview
+
+The Trouble Agent Platform (TrAP) is a tool designed to help medical teachers and experts automate the creation of quizzes sourced from their teaching documents. The core idea is to generate questions as *affirmations* that require **yes/no** answers, each accompanied by a justification.
+
+The platform has two interfaces:  
+- **Student side** — Students can log in to the correct session using a unique code and answer the questions.  
+- **Mentor side** — Mentors can review student answers and provide feedback, either collectively by email or individually through dedicated feedback sessions.
+
+A key concept of the platform is that a large percentage of the affirmations are intentionally false yet plausible, in order to stimulate students’ critical thinking. This is achieved with the help of an LLM/SLM, which makes the sourced information more nuanced and believable. In this way, we leverage the potential of hallucinations to generate challenging affirmations.
 
 ## Project Structure
 
