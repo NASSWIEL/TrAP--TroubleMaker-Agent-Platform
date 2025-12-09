@@ -3,7 +3,7 @@ import json
 import os
 import random
 import re
-import logging # Added for AuthTestView
+# import logging # Added for AuthTestView
 
 # Django Imports
 from django.contrib.auth import authenticate, logout, login
@@ -193,9 +193,9 @@ class LogoutAPIView(APIView):
 # --- Gemini API Interaction Views ---
 
 # Using environment variable is strongly recommended for API keys
-# API_KEY = os.environ.get("GEMINI_API_KEY")
+API_KEY = os.environ.get("GEMINI_API_KEY")
 # Fallback to hardcoded key (less secure, replace with env var)
-API_KEY = "AIzaSyBoY3qt37ceH8lyD0HXBufmVniCFQljzP8"
+# API_KEY = "AIzaSyBoY3qt37ceH8lyD0HXBufmVniCFQljzP8"
 if not API_KEY:
     print("Warning: GEMINI_API_KEY environment variable not set.")
 else:
@@ -1148,73 +1148,7 @@ class DebriefAPIView(APIView):
 
 # --- Debugging/Testing Views ---
 
-class AuthTestView(APIView):
-    """
-    !!! TEMPORARY DEBUGGING VIEW - REMOVE BEFORE PRODUCTION !!!
-    Tests authentication methods for a given email/password.
-    Exposes potentially sensitive details about authentication checks.
-    """
-    permission_classes = (permissions.AllowAny,)
 
-    def post(self, request):
-        logger = logging.getLogger('api.views.AuthTest') # Specific logger
-        logger.warning("AuthTestView accessed. REMOVE THIS VIEW BEFORE PRODUCTION.")
-
-        email = request.data.get('email')
-        password = request.data.get('password')
-
-        if not email or not password:
-            return Response(
-                {'error': 'Email et mot de passe sont requis.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        logger.debug(f"AuthTest attempt for email: {email}")
-
-        results = {
-            'email_provided': email,
-            'user_exists': False,
-            'user_role': None,
-            'user_username': None,
-            'is_encadrant_role': False,
-            'django_authenticate_success': False,
-            'check_password_success': False,
-            'can_login_as_encadrant': False,
-            'error_details': None
-        }
-
-        try:
-            user = Users.objects.get(email=email)
-            results['user_exists'] = True
-            results['user_role'] = user.role
-            results['user_username'] = user.username
-            results['is_encadrant_role'] = user.role == 'encadrant'
-
-            # Test 1: Django's authenticate() using username
-            # Requires username in DB and working AUTHENTICATION_BACKENDS
-            auth_user = authenticate(request, username=user.username, password=password)
-            results['django_authenticate_success'] = auth_user is not None
-            logger.debug(f"authenticate(username='{user.username}') result: {'Success' if results['django_authenticate_success'] else 'Fail'}")
-
-            # Test 2: Direct password check using check_password()
-            # This bypasses backend checks but confirms password match
-            results['check_password_success'] = user.check_password(password)
-            logger.debug(f"user.check_password() result: {'Success' if results['check_password_success'] else 'Fail'}")
-
-            # Final check for encadrant login possibility
-            results['can_login_as_encadrant'] = results['is_encadrant_role'] and (results['django_authenticate_success'] or results['check_password_success'])
-
-        except Users.DoesNotExist:
-            results['error_details'] = f"Aucun utilisateur trouvé avec l'email {email}"
-            logger.debug(results['error_details'])
-        except Exception as e:
-            results['error_details'] = f"An unexpected error occurred: {str(e)}"
-            logger.error(f"Unexpected error during AuthTest: {e}", exc_info=True)
-
-
-        logger.debug(f"AuthTest results for {email}: {results}")
-        # Return the detailed results (FOR DEBUGGING ONLY)
-        return Response(results, status=status.HTTP_200_OK)
 
 class EmailToIdResolverView(APIView):
     """Resolve student emails to their user IDs."""

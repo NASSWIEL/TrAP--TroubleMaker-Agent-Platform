@@ -3,7 +3,7 @@ from .views import (
     ActiviteLoginView, LogoutAPIView, EncadrantLoginView,
     ActiviteAPIView, AffirmationAPIView, ReponseAPIView, DebriefAPIView,
     Generate, ChatbotAPIView, GeminiGenerateAffirmationsAPIView,
-    GeminiMakeHarderAPIView, AuthTestView, EmailToIdResolverView,
+    GeminiMakeHarderAPIView, EmailToIdResolverView,
     CategorieAPIView
 )
 
@@ -41,7 +41,4 @@ urlpatterns = [
 
     # Categories endpoint
     path('categories/', CategorieAPIView.as_view(), name='categories_list'),
-
-    # Nouvelle route pour tester l'authentification
-    path('auth-test/', AuthTestView.as_view(), name='auth-test'),
 ]
