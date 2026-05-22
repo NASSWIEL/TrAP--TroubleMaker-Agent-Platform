@@ -404,8 +404,7 @@ class GeminiMakeHarderAPIView(APIView):
             return Response({'error': 'Affirmation requise'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Configure the Gemini API with hardcoded API key
-            genai.configure(api_key="AIzaSyABqiPmXV2L_poHHdr9bKA8Fm8ehN2hWms")
+            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
             
             # Construct the prompt
             prompt = f"""
