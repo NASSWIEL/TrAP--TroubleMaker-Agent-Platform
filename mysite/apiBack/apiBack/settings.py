@@ -84,6 +84,8 @@ CORS_ALLOWED_ORIGINS = [
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 # Allow cookies and credentials to be sent with CORS requests
 CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = False  # True en production HTTPS
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
@@ -122,7 +124,7 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'apiBack.wsgi.application'
+WSGI_APPLICATION = 'apiBack.wsgi.application'
 # AUTH_USER_MODEL = 'api.User'
 
 # Database
