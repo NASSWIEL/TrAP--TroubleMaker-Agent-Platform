@@ -62,35 +62,17 @@ class AffirmationSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         nbr_reponses = data.get('nbr_reponses', getattr(self.instance, 'nbr_reponses', None))
-        is_correct_vf = data.get('is_correct_vf', getattr(self.instance, 'is_correct_vf', None))
-        reponse_correcte_qcm = data.get('reponse_correcte_qcm', getattr(self.instance, 'reponse_correcte_qcm', None))
 
-        # Validation simplifiée : is_correct_vf est maintenant permis pour tous les types
-        # car toutes les affirmations ont intrinsèquement une valeur de vérité
-        if nbr_reponses == 2:
-            if is_correct_vf is None:
-                raise serializers.ValidationError({
-                    'is_correct_vf': "Ce champ est requis lorsque nbr_reponses est 2 (Vrai/Faux)."
-                })
-            if reponse_correcte_qcm is not None:
-                 raise serializers.ValidationError({
-                    'reponse_correcte_qcm': "Ce champ ne doit pas être défini lorsque nbr_reponses est 2."
-                })
-        elif nbr_reponses == 4:
-            # Pour les réponses graduées, is_correct_vf est maintenant permis
-            if is_correct_vf is None:
-                raise serializers.ValidationError({
-                    'is_correct_vf': "Ce champ est requis même pour les réponses graduées."
-                })
-            if reponse_correcte_qcm is None:
-                raise serializers.ValidationError({
-                    'reponse_correcte_qcm': "Ce champ est requis lorsque nbr_reponses est 4 (4 Choix)."
-                })
-        elif nbr_reponses is None:
-             raise serializers.ValidationError({"nbr_reponses": "Le format (nbr_reponses: 2 ou 4) est requis."}) 
-        else:
-             raise serializers.ValidationError({"nbr_reponses": f"Format invalide ({nbr_reponses}). Doit être 2 ou 4."})
+        if nbr_reponses is None:
+            raise serializers.ValidationError(
+                {"nbr_reponses": "Le format (nbr_reponses: 2 ou 4) est requis."}
+            )
+        if nbr_reponses not in [2, 4]:
+            raise serializers.ValidationError(
+                {"nbr_reponses": f"Format invalide ({nbr_reponses}). Doit être 2 ou 4."}
+            )
 
+        # is_correct_vf et reponse_correcte_qcm sont optionnels (affirmations neutres)
         return data
 
 class ActiviteSerializer(serializers.ModelSerializer):
