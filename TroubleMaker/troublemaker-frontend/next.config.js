@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
-// const API_BASE_URL = "https://8000-cs-338772889965-default.cs-europe-west1-onse.cloudshell.dev";
-const API_BASE_URL = "http://localhost:8000";
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return [
       {

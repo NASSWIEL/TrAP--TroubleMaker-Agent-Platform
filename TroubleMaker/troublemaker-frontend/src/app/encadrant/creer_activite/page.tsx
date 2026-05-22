@@ -4,9 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axios from "axios"; // Import axios
-
-// API Base URL (adjust if necessary)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from "@/lib/api";
 
 // 🔹 Define interface for Affirmation data from API
 interface Affirmation {

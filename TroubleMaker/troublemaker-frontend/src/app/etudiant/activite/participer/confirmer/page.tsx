@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton";
+import { API_BASE_URL } from "@/lib/api";
 
 interface AffirmationApi {
     id: number;
@@ -33,8 +34,6 @@ interface ReponseApiData {
     justification: string | null;
     timestamp?: string;
 }
-
-const API_BASE_URL = "http://localhost:8000";
 
 const qcmNumberToText: { [key: number]: string } = {
     1: "Toujours vrai",

@@ -26,9 +26,7 @@ import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import axios from "axios";
-
-// API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from "@/lib/api";
 
 // Interface definitions based on backend models
 interface Activity {

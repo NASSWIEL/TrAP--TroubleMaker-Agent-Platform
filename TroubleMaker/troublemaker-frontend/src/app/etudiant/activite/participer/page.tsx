@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/api";
 
 interface AffirmationApi {
     id: number;
@@ -45,8 +46,6 @@ const qcmLabels: { [key: string]: string } = {
     "3": "Généralement faux",
     "4": "Toujours faux"
 };
-
-const API_BASE_URL = "http://localhost:8000";
 
 export default function Participer() {
   const router = useRouter();

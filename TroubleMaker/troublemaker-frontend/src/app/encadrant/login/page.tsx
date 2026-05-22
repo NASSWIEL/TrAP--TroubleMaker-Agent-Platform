@@ -5,9 +5,7 @@ import Image from "next/image";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { CSSProperties } from "react";
-
-// Configuration de l'URL de base de l'API Django
-const API_BASE_URL = "http://localhost:8000"; 
+import { API_BASE_URL } from "@/lib/api";
 
 const EncadrantLogin = () => {
     const router = useRouter();

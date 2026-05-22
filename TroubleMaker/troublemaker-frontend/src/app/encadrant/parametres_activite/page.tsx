@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Student { // Assuming a structure for student objects
   id: number;
@@ -119,14 +120,14 @@ const GererActivites = () => {
   const [editText, setEditText] = useState("");
   const [editExplication, setEditExplication] = useState("");
 
-  const API_BASE_URL = 'http://localhost:8000/api';
+  const API_URL = `${API_BASE_URL}/api`;
 
   // Primary useEffect to fetch THE activity being edited
   useEffect(() => {
     if (activityCodeParam) {
       console.log(`Fetching activity for code: ${activityCodeParam}`);
       setCurrentActivityCode(activityCodeParam.toUpperCase());
-      fetch(`${API_BASE_URL}/activites/${activityCodeParam.toUpperCase()}/`, {
+      fetch(`${API_URL}/activites/${activityCodeParam.toUpperCase()}/`, {
         method: 'GET',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
@@ -196,7 +197,7 @@ const GererActivites = () => {
   // useEffect pour charger les catégories disponibles
   useEffect(() => {
     console.log("Fetching categories...");
-    fetch(`${API_BASE_URL}/categories/`, { credentials: 'include' })
+    fetch(`${API_URL}/categories/`, { credentials: 'include' })
       .then((res) => {
         if (!res.ok) {
           console.error(`Failed to fetch categories, status: ${res.status}`);
@@ -226,7 +227,7 @@ const GererActivites = () => {
   // Secondary useEffect to fetch ALL affirmations for the database list
   useEffect(() => {
     console.log("Fetching all affirmations...");
-    fetch(`${API_BASE_URL}/affirmations/`, { credentials: 'include' })
+    fetch(`${API_URL}/affirmations/`, { credentials: 'include' })
       .then((res) => {
         if (!res.ok) {
           console.error(`Failed to fetch affirmations, status: ${res.status}`);
@@ -307,7 +308,7 @@ const GererActivites = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/affirmations/${affirmationId}/`, {
+      const response = await fetch(`${API_URL}/affirmations/${affirmationId}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -354,7 +355,7 @@ const GererActivites = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/affirmations/${affirmationId}/`, {
+      const response = await fetch(`${API_URL}/affirmations/${affirmationId}/`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -386,7 +387,7 @@ const GererActivites = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/affirmations/${affirmationId}/`, {
+      const response = await fetch(`${API_URL}/affirmations/${affirmationId}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +432,7 @@ const GererActivites = () => {
         return;
     }
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) {
-      fetch(`${API_BASE_URL}/activites/${currentActivityCode}/`, { 
+      fetch(`${API_URL}/activites/${currentActivityCode}/`, { 
           method: "DELETE", 
           credentials: 'include'
       })
@@ -458,7 +459,7 @@ const GererActivites = () => {
       const emails = emailString.split(",").map(email => email.trim()).filter(Boolean);
       if (emails.length === 0) return [];
       
-      const response = await fetch(`${API_BASE_URL}/users/get_ids_by_email/`, { 
+      const response = await fetch(`${API_URL}/users/get_ids_by_email/`, { 
         method: 'POST', 
         body: JSON.stringify({emails}), 
         credentials: 'include', 
@@ -500,7 +501,7 @@ const GererActivites = () => {
     // Create new category if newCategoryName is provided
     if (newCategoryName.trim()) {
       try {
-        const categoryResponse = await fetch(`${API_BASE_URL}/categories/`, {
+        const categoryResponse = await fetch(`${API_URL}/categories/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -547,11 +548,11 @@ const GererActivites = () => {
     };
 
     let method = "PATCH";
-    let url = `${API_BASE_URL}/activites/${currentActivityCode}/`;
+    let url = `${API_URL}/activites/${currentActivityCode}/`;
 
     if (!activityCodeParam) { 
         method = "POST";
-        url = `${API_BASE_URL}/activites/`;
+        url = `${API_URL}/activites/`;
         if (currentActivityCode.trim()) { 
              activityDataToSave.code_activite = currentActivityCode.trim().toUpperCase();
         } else {
@@ -586,7 +587,7 @@ const GererActivites = () => {
         } else {
             // Re-fetch all affirmations to update the DB list correctly after save
             console.log("Re-fetching affirmations after save...");
-            fetch(`${API_BASE_URL}/affirmations/`, { credentials: 'include' })
+            fetch(`${API_URL}/affirmations/`, { credentials: 'include' })
               .then(response => {
                 if (response.ok) {
                   return response.json();

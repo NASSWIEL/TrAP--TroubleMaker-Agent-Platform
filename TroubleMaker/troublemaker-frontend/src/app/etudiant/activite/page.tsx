@@ -2,6 +2,7 @@
 import { CSSProperties, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/api";
 
 interface ActiviteData {
     code_activite: string;
@@ -11,8 +12,6 @@ interface ActiviteData {
     affirmations_associes?: any[]; // Add this to check for empty affirmations
     is_published?: boolean; // Add this to check publication status
 }
-
-const API_BASE_URL = "http://localhost:8000";
 
 export default function ActivitePage() {
   const router = useRouter();

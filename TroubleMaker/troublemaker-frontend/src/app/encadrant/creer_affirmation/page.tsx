@@ -4,9 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axios from "axios"; // Import axios
-
-// API Base URL (adjust if necessary)
-const API_BASE_URL = "http://localhost:8000"; 
+import { API_BASE_URL } from "@/lib/api";
 
 
 interface Affirmation {
@@ -164,14 +162,14 @@ const GererActivites = () => {
     alert("Activité lancée !");
   };
 
-  const handleDragStart = (event, affirmation: Affirmation, source: 'database' | 'selected') => {
+  const handleDragStart = (event: React.DragEvent, affirmation: Affirmation, source: 'database' | 'selected') => {
     event.dataTransfer.setData(
       "text/plain",
       JSON.stringify({ affirmation, source })
     );
   };
 
-  const handleDrop = (event, destination: 'database' | 'selected') => {
+  const handleDrop = (event: React.DragEvent, destination: 'database' | 'selected') => {
     event.preventDefault();
     const { affirmation, source } = JSON.parse(event.dataTransfer.getData("text/plain")) as { affirmation: Affirmation, source: 'database' | 'selected' };
 
@@ -188,7 +186,7 @@ const GererActivites = () => {
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault();
   };
 

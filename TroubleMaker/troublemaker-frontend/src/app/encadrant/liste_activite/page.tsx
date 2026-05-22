@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"; // 🔹 Import useEffect
 import { useRouter } from "next/navigation"; // 🔹 Import de useRouter
 import axios from "axios"; // 🔹 Import axios
+import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import Account from "@/components/ui/Account";
 import { Settings, Plus, SpellCheck, RefreshCw, MessageSquare, User, LogOut } from "lucide-react";
@@ -42,9 +43,6 @@ interface Activity {
   nbr_affirmations_associe: number;
   is_published: boolean;
 }
-
-// 🔹 API Base URL (fix the environment variable name to match other pages)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const App = () => {
   const [searchQuery, setSearchQuery] = useState("");
