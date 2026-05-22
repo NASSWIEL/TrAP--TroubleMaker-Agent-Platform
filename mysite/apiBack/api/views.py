@@ -832,7 +832,7 @@ class AffirmationAPIView(APIView):
             serializer = AffirmationSerializer(affirmation, context={'request': request})
             return Response(serializer.data)
 
-        # POST method (Modified to link to encadrant and optionally to activity)
+    # POST method (Modified to link to encadrant and optionally to activity)
     def post(self, request):
         if request.user.role != 'encadrant':
             return Response({"error": "Seuls les encadrants peuvent créer des affirmations."}, status=status.HTTP_403_FORBIDDEN)
