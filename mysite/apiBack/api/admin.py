@@ -58,7 +58,7 @@ class AffirmationAdmin(admin.ModelAdmin):
         }),
         ('Détails QCM (si nbr_reponses=4)', {
             'classes': ('collapse',),
-            'fields': ('option_1', 'option_2', 'option_3', 'option_4', 'reponse_correcte_qcm'),
+            'fields': ('reponse_correcte_qcm',),
         }),
     )
 
