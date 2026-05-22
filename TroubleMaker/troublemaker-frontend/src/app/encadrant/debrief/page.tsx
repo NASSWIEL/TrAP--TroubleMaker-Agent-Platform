@@ -71,8 +71,8 @@ interface StudentResponse {
 interface Debrief {
   id: number;
   feedback: string;
-  reponse: number; // Response ID
-  encadrant: number;
+  reponse: { id: number; [key: string]: unknown };
+  encadrant: { id: number; [key: string]: unknown };
 }
 
 // Type for grouped responses by student
@@ -140,7 +140,7 @@ export default function DebriefPage() {
         // Create a map of response_id -> debrief
         const debriefMap = new Map<number, Debrief>();
         debriefResponse.data.forEach(debrief => {
-          debriefMap.set(debrief.reponse, debrief);
+          debriefMap.set(debrief.reponse.id, debrief);
         });
         setDebriefs(debriefMap);
 
