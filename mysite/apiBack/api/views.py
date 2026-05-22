@@ -466,6 +466,8 @@ class GeminiMakeHarderAPIView(APIView):
     """
     API endpoint to make an affirmation harder using Google's Gemini API
     """
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         # Check if user is authenticated
         if not request.user.is_authenticated:
@@ -1230,6 +1232,8 @@ class EmailToIdResolverView(APIView):
     permission_classes = [IsAuthenticated]  # Only authenticated encadrants should access this
 
     def post(self, request):
+        if request.user.role != 'encadrant':
+            return Response({'error': 'Permission refusée.'}, status=status.HTTP_403_FORBIDDEN)
         emails = request.data.get('emails', [])
         
         if not isinstance(emails, list):
