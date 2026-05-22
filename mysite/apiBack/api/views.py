@@ -225,7 +225,82 @@ def extract_json_from_gemini(input_text):
         return None # Indicate failure
 
 class ChatbotAPIView(APIView):
-    pass
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        question = request.data.get('question')
+        if not question:
+            return Response(
+                {"error": "'question' est requise."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not API_KEY:
+            return Response(
+                {"error": "Gemini API Key not configured."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+            generation_config = {
+                "temperature": 0.9,
+                "top_p": 0.95,
+                "top_k": 40,
+                "max_output_tokens": 8192,
+                "response_mime_type": "text/plain",
+            }
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-flash",
+                generation_config=generation_config,
+            )
+            prompt = f"""
+            Vous êtes un expert en connaissances médicales. Votre tâche consiste à produire des affirmations médicales fausses mais plausibles qui répondent directement à la question: "{question}".
+
+            Chaque affirmation doit :
+            1. Être complexe et difficile à juger comme fausse au premier abord.
+            2. Paraître scientifiquement plausible et liée au sujet médical de la question.
+            3. Être directement en lien avec la question.
+
+            Réponds **uniquement** avec un objet JSON structuré comme ceci, sans texte avant ou après:
+            {{
+              "affirmations": [
+                {{
+                  "affirmation": "texte de l'affirmation fausse",
+                  "is_correct_vf": false,
+                  "explication": "explication détaillée de pourquoi cette affirmation est fausse"
+                }},
+                {{
+                  "affirmation": "texte de la deuxième affirmation fausse",
+                  "is_correct_vf": false,
+                  "explication": "explication détaillée"
+                }},
+                {{
+                  "affirmation": "texte de la troisième affirmation fausse",
+                  "is_correct_vf": false,
+                  "explication": "explication détaillée"
+                }}
+              ]
+            }}
+            """
+            response = model.generate_content(prompt)
+            affirmations_data = extract_json_from_gemini(response.text)
+
+            if not affirmations_data or 'affirmations' not in affirmations_data:
+                return Response(
+                    {"error": "Format de réponse incorrect depuis l'API Gemini."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            for aff in affirmations_data['affirmations']:
+                aff['is_correct_vf'] = False
+
+            return Response(affirmations_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Erreur lors de la génération: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class Generate(APIView):
     """
@@ -265,6 +340,7 @@ class Generate(APIView):
         # 3. Simulate DRF Request for internal call (pass original request for context)
         #    Using Request ensures compatibility if ChatbotAPIView permissions/context needs change.
         internal_drf_request = Request(request._request, parsers=request.parsers)
+        internal_drf_request._data = internal_request_data
         internal_drf_request._full_data = internal_request_data # Set data for the internal request
         internal_drf_request.user = request.user # Pass user context
         internal_drf_request.auth = request.auth # Pass auth context
