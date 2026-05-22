@@ -100,7 +100,7 @@ class ActiviteLoginView(APIView):
             # If using custom user model without password for students, login might behave unexpectedly.
             # Consider token-based auth or session management carefully.
             # Assuming standard Django auth flow works here:
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             data = {
                 'id': user.id,
                 'username': user.username,
