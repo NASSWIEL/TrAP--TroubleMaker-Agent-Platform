@@ -456,7 +456,7 @@ class GeminiGenerateAffirmationsAPIView(APIView):
             print(f"Gemini Generation Error: {traceback.format_exc()}")
             # Fallback mock when API is disabled/unavailable (SERVICE_DISABLED or quota issues)
             error_str = str(e)
-            if "SERVICE_DISABLED" in error_str or "403" in error_str or not GENAI_AVAILABLE:
+            if "SERVICE_DISABLED" in error_str or "403" in error_str or "429" in error_str or not GENAI_AVAILABLE:
                 question = request.data.get('question', 'un sujet médical')
                 mock_affirmations = {
                     "affirmations": [
@@ -557,7 +557,7 @@ class GeminiMakeHarderAPIView(APIView):
         except Exception as e:
             error_str = str(e)
             print(f"Error making affirmation harder: {error_str}")
-            if "SERVICE_DISABLED" in error_str or "403" in error_str or not GENAI_AVAILABLE:
+            if "SERVICE_DISABLED" in error_str or "403" in error_str or "429" in error_str or not GENAI_AVAILABLE:
                 # Fallback: return a slightly modified version of the original
                 harder = affirmation.rstrip('.') + ", selon les dernières méta-analyses issues de cohortes prospectives multicentriques."
                 harder_explanation = (explanation or "Cette affirmation est fausse.") + " La reformulation ajoute une fausse caution scientifique pour la rendre plus difficile à détecter."
@@ -632,7 +632,7 @@ class GeminiMakeSingleAffirmationHarderAPIView(APIView):
             import traceback
             error_str = str(e)
             print(f"Error making single affirmation harder: {traceback.format_exc()}")
-            if "SERVICE_DISABLED" in error_str or "403" in error_str or not GENAI_AVAILABLE:
+            if "SERVICE_DISABLED" in error_str or "403" in error_str or "429" in error_str or not GENAI_AVAILABLE:
                 harder = affirmation_text.rstrip('.') + ", selon les dernières méta-analyses issues de cohortes prospectives multicentriques."
                 print("[GeminiMakeSingle] Using mock fallback (API unavailable)")
                 return Response({'original_affirmation': affirmation_text, 'harder_affirmation': harder, 'is_correct_vf': False}, status=status.HTTP_200_OK)
@@ -727,7 +727,7 @@ class GeminiMakeMultipleAffirmationsHarderAPIView(APIView):
             import traceback
             error_str = str(e)
             print(f"Error making multiple affirmations harder: {traceback.format_exc()}")
-            if "SERVICE_DISABLED" in error_str or "403" in error_str or not GENAI_AVAILABLE:
+            if "SERVICE_DISABLED" in error_str or "403" in error_str or "429" in error_str or not GENAI_AVAILABLE:
                 harder = [s.rstrip('.') + ", selon les données issues de méta-analyses prospectives récentes." for s in statements]
                 print("[GeminiMakeMultiple] Using mock fallback (API unavailable)")
                 return Response({"statements": harder, "is_correct_vf": [False]*len(statements)}, status=status.HTTP_200_OK)
