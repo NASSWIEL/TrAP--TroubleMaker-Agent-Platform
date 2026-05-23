@@ -27,7 +27,7 @@ const EncadrantLogin = () => {
 
         try {
             // NOTE: Update this endpoint when created in the backend
-            const response = await axios.post(`${API_BASE_URL}/api/encadrant/login/`, {
+            const response = await axios.post(`${API_BASE_URL}/api/encadrant/login`, {
                 email: email,
                 password: password,
             }, {

@@ -17,7 +17,7 @@ const App = () => {
   const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
 
   useEffect(() => {
-    api.get("/api/affirmations/")
+    api.get("/api/affirmations")
       .then((res) => setAffirmations(res.data))
       .catch(console.error);
   }, []);
@@ -32,7 +32,7 @@ const App = () => {
 
   const handleDeleteAffirmation = (id: number) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette affirmation ?")) {
-      api.delete(`/api/affirmations/${id}/`)
+      api.delete(`/api/affirmations/${id}`)
         .then(() => setAffirmations((prev) => prev.filter((a) => a.id !== id)))
         .catch(console.error);
     }
@@ -41,7 +41,7 @@ const App = () => {
   const handleEditAffirmation = (_id: number) => {};
 
   const handleLogout = () => {
-    api.post("/api/logout/")
+    api.post("/api/logout")
       .then(() => router.push("/"))
       .catch(() => router.push("/"));
   };

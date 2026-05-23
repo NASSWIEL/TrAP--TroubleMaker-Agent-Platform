@@ -67,7 +67,7 @@ export default function Confirmer() {
       setError(null);
       try {
         const [activityResponse, responsesResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/activites/${activityCode}/`, { withCredentials: true }),
+          axios.get(`${API_BASE_URL}/api/activites/${activityCode}`, { withCredentials: true }),
           axios.get(`${API_BASE_URL}/api/reponses/?activity_code=${activityCode}`, { withCredentials: true })
         ]);
 

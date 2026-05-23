@@ -313,7 +313,7 @@ const GererActivites = () => {
       setLoadingAffirmations(true);
       setError(null);
       try {
-        const response = await axios.get<Affirmation[]>(`${API_BASE_URL}/api/affirmations/`, {
+        const response = await axios.get<Affirmation[]>(`${API_BASE_URL}/api/affirmations`, {
           withCredentials: true, // Important for authentication
         });
         if (response.status === 200 && Array.isArray(response.data)) {
@@ -351,7 +351,7 @@ const GererActivites = () => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
-        const response = await axios.get<Categorie[]>(`${API_BASE_URL}/api/categories/`, {
+        const response = await axios.get<Categorie[]>(`${API_BASE_URL}/api/categories`, {
           withCredentials: true,
         });
         if (response.status === 200 && Array.isArray(response.data)) {
@@ -421,7 +421,7 @@ const GererActivites = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}/`, {
+      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -476,7 +476,7 @@ const GererActivites = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}/`, {
+      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -512,7 +512,7 @@ const GererActivites = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}/`, {
+      const response = await fetch(`${API_BASE_URL}/api/affirmations/${affirmationId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -611,7 +611,7 @@ const GererActivites = () => {
     // Create new category if newCategoryName is provided
     if (newCategoryName.trim()) {
       try {
-        const categoryResponse = await axios.post(`${API_BASE_URL}/api/categories/`, 
+        const categoryResponse = await axios.post(`${API_BASE_URL}/api/categories`,
           { nom: newCategoryName.trim() }, 
           { withCredentials: true }
         );
@@ -656,7 +656,7 @@ const GererActivites = () => {
     console.log("Submitting Activity Data:", activityData);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/activites/`, activityData, {
+      const response = await axios.post(`${API_BASE_URL}/api/activites`, activityData, {
         withCredentials: true, // Important for authentication
       });
 

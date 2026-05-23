@@ -12,7 +12,7 @@ export default function EncadrantLayout({
   const router = useRouter();
 
   useEffect(() => {
-    api.get("/api/activites/").catch(() => router.push("/encadrant/login"));
+    api.get("/api/activites").catch(() => router.push("/encadrant/login"));
   }, [router]);
 
   return children;

@@ -116,7 +116,7 @@ export default function DebriefPage() {
 
         // Fetch activity details
         const activityResponse = await axios.get<Activity>(
-          `${API_BASE_URL}/api/activites/${activityCode}/`,
+          `${API_BASE_URL}/api/activites/${activityCode}`,
           { withCredentials: true }
         );
         setActivity(activityResponse.data);
@@ -134,7 +134,7 @@ export default function DebriefPage() {
 
         // Fetch existing debriefs
         const debriefResponse = await axios.get<Debrief[]>(
-          `${API_BASE_URL}/api/debriefs/`,
+          `${API_BASE_URL}/api/debriefs`,
           { withCredentials: true }
         );
         
@@ -228,7 +228,7 @@ export default function DebriefPage() {
   const handleCreateDebrief = async (responseId: number, feedback: string) => {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/debriefs/`,
+        `${API_BASE_URL}/api/debriefs`,
         {
           reponse_id: responseId,
           feedback: feedback

@@ -148,7 +148,7 @@ export default function Participer() {
       setLoading(true);
       setError(null);
       try {
-        const activityResponse = await axios.get(`${API_BASE_URL}/api/activites/${activityCode}/`, { withCredentials: true });
+        const activityResponse = await axios.get(`${API_BASE_URL}/api/activites/${activityCode}`, { withCredentials: true });
         if (activityResponse.status !== 200 || !activityResponse.data) throw new Error("Impossible de charger l'activité.");
         const fetchedActivite: ActiviteApiData = activityResponse.data;
         setActivite(fetchedActivite);
@@ -244,7 +244,7 @@ export default function Participer() {
               reponse_choisie_qcm: apiPayload.reponse_choisie_qcm,
               justification: apiPayload.justification,
           };
-          const response = await axios.post<ReponseApiData>(`${API_BASE_URL}/api/reponses/`, payload, { withCredentials: true });
+          const response = await axios.post<ReponseApiData>(`${API_BASE_URL}/api/reponses`, payload, { withCredentials: true });
           if (response.status === 201 || response.status === 200) {
               const savedData = response.data;
               setSubmittedResponses(prev => ({ ...prev, [indexToSubmit]: savedData }));

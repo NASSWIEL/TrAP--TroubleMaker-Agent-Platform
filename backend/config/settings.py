@@ -84,7 +84,7 @@ CORS_ALLOWED_ORIGINS = [
 ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h]
 # Allow cookies and credentials to be sent with CORS requests
 CORS_ALLOW_CREDENTIALS = True
-SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SECURE = False  # True en production HTTPS
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False

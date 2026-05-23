@@ -63,7 +63,7 @@ const App = () => {
   // 🔹 Logout function
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/logout/`, {}, {
+      await axios.post(`${API_BASE_URL}/api/logout`, {}, {
         withCredentials: true,
       });
       // Redirect to home page
@@ -80,7 +80,7 @@ const App = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/activites/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/activites`, {
         withCredentials: true, // Important for authentication
       });
       if (response.status === 200 && Array.isArray(response.data)) {

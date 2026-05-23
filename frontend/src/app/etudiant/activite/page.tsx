@@ -33,7 +33,7 @@ export default function ActivitePage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/activites/${activityCode}/`, {
+        const response = await axios.get(`${API_BASE_URL}/api/activites/${activityCode}`, {
           withCredentials: true,
         });
         if (response.status === 200 && response.data) {

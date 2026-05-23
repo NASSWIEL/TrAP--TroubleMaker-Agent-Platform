@@ -26,7 +26,7 @@ const EtudiantLogin = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/login/activite/`, {
+            const response = await axios.post(`${API_BASE_URL}/api/login/activite`, {
                 email: email,
                 code_activite: code,
             }, {

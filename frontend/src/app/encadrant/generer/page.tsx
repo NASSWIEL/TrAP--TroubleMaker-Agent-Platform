@@ -101,7 +101,7 @@ export default function GenerateAffirmationPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/gemini/generate-affirmations/`,
+        `${API_BASE_URL}/api/gemini/generate-affirmations`,
         {
           method: 'POST',
           headers: {
@@ -158,7 +158,7 @@ ${error.message}`);
 
     try {
         // Call the endpoint that returns { affirmation: "...", explanation: "..." }
-        const response = await fetch(`${API_BASE_URL}/api/gemini/make-harder/`, {
+        const response = await fetch(`${API_BASE_URL}/api/gemini/make-harder`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -229,7 +229,7 @@ ${error.message}`);
       };
 
       const response = await fetch(
-        `${API_BASE_URL}/api/affirmations/`,
+        `${API_BASE_URL}/api/affirmations`,
         {
           method: 'POST',
           headers: {
