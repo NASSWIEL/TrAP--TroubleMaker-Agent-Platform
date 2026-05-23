@@ -250,7 +250,7 @@ class ChatbotAPIView(APIView):
                 "response_mime_type": "text/plain",
             }
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name="gemini-2.0-flash",
                 generation_config=generation_config,
             )
             prompt = f"""
@@ -380,7 +380,7 @@ class GeminiGenerateAffirmationsAPIView(APIView):
             }
 
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash", # Or "gemini-1.5-flash" for speed/cost
+                model_name="gemini-2.0-flash",
                 generation_config=generation_config,
             )
 
@@ -558,7 +558,7 @@ class GeminiMakeSingleAffirmationHarderAPIView(APIView):
             }
 
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-pro", # Or flash
+                model_name="gemini-2.0-flash",
                 generation_config=generation_config,
             )
 
@@ -662,7 +662,7 @@ class GeminiMakeMultipleAffirmationsHarderAPIView(APIView):
             }
 
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-pro",
+                model_name="gemini-2.0-flash",
                 generation_config=generation_config,
             )
 
