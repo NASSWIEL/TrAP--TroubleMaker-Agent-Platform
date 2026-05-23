@@ -190,21 +190,13 @@ export default function Confirmer() {
         </div>
 
         <div className="space-y-6">
-          {currentAffirmations.map((affirmation, idx) => {
-              const globalIndex = startIndex + idx;
+          {currentAffirmations.map((affirmation) => {
               const response = reponses[affirmation.id];
               const justification = response?.justification || "(Aucune explication fournie)";
               const isExpanded = expandedTexts[affirmation.id] || false;
               let displayAnswer = "Non répondu ou Je ne sais pas";
 
               if (response) {
-                  // Debug: log pour vérifier les valeurs
-                  console.log('Debug - Affirmation ID:', affirmation.id, 
-                             'nbr_reponses:', affirmation.nbr_reponses,
-                             'type_affirmation_requise:', activite.type_affirmation_requise,
-                             'reponse_vf:', response.reponse_vf,
-                             'reponse_choisie_qcm:', response.reponse_choisie_qcm);
-                  
                   // Logique de conversion complexe : comment les données sont stockées VS comment l'utilisateur les a vues
                   if (affirmation.nbr_reponses === 2) {
                       // Données stockées en Vrai/Faux
@@ -230,8 +222,6 @@ export default function Confirmer() {
                           else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) displayAnswer = "Faux";
                       }
                   }
-                  
-                  console.log('Debug - Final displayAnswer:', displayAnswer);
               }
 
               return (

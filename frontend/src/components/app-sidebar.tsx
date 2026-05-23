@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 import {
   MessagesSquare,
   ListTodo,
-  Settings,
-  Home,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -19,7 +17,7 @@ const sidebarItems = [
   },
   {
     title: "Liste des affirmations",
-    href: "/encadrant/generer",
+    href: "/encadrant/liste_affirmations",
     icon: MessagesSquare,
   },
 
