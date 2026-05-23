@@ -1,39 +1,49 @@
 "use client"; // Directive pour Next.js
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Account from "@/components/ui/Account";
 import { Trash, Edit, Plus } from "lucide-react";
+import { api } from "@/lib/api";
+
+interface Affirmation {
+  id: number;
+  affirmation: string;
+}
 
 const App = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [affirmations, setAffirmations] = useState([
-    { id: 1, text: "La Terre est ronde." },
-    { id: 2, text: "Le soleil est une étoile." },
-    { id: 3, text: "L'eau gèle à 0°C." },
-    { id: 4, text: "La vitesse de la lumière est de 299 792 458 m/s." },
-    { id: 5, text: "Les humains ont 32 dents adultes." },
-  ]);
+  const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
+
+  useEffect(() => {
+    api.get("/api/affirmations/")
+      .then((res) => setAffirmations(res.data))
+      .catch(console.error);
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value.toLowerCase());
   };
 
   const filteredAffirmations = affirmations.filter((affirmation) =>
-    affirmation.text.toLowerCase().includes(searchQuery)
+    affirmation.affirmation.toLowerCase().includes(searchQuery)
   );
 
   const handleDeleteAffirmation = (id: number) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette affirmation ?")) {
-      setAffirmations((prev) => prev.filter((affirmation) => affirmation.id !== id));
+      api.delete(`/api/affirmations/${id}/`)
+        .then(() => setAffirmations((prev) => prev.filter((a) => a.id !== id)))
+        .catch(console.error);
     }
   };
 
-  const handleEditAffirmation = (id: number) => {
-    alert(`Éditez l'affirmation avec l'ID : ${id}`);
-  };
+  const handleEditAffirmation = (_id: number) => {};
 
   const handleLogout = () => {
-    alert("Vous avez été déconnecté !");
+    api.post("/api/logout/")
+      .then(() => router.push("/"))
+      .catch(() => router.push("/"));
   };
 
   return (
@@ -82,7 +92,7 @@ const App = () => {
 
               {/* Section du contenu */}
               <div className="flex-1">
-                <p className="text-gray-800">{affirmation.text}</p>
+                <p className="text-gray-800">{affirmation.affirmation}</p>
               </div>
 
               {/* Section du stylo à droite */}
