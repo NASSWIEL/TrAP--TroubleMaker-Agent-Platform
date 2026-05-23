@@ -293,14 +293,12 @@ export default function Participer() {
 
  const handleFinalSubmit = async () => {
     if (!activite || !activityCode || isSubmitting) return;
-    setIsSubmitting(true);
     setError(null);
 
     const finalIndex = currentAffirmationIndex;
     const lastSubmissionResult = await submitCurrentResponse(finalIndex);
 
     if (!lastSubmissionResult.success) {
-         setIsSubmitting(false);
          return;
     }
 
