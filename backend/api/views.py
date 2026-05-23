@@ -1180,19 +1180,27 @@ class DebriefAPIView(APIView):
     """CRUD operations for Debrief model."""
     permission_classes = [permissions.IsAuthenticated]
 
-    # GET (From File 1)
+    # GET
     def get(self, request, pk=None):
-        if not request.user.role == 'encadrant':
-             return Response({"error": "Seuls les encadrants peuvent voir les débriefs."}, status=status.HTTP_403_FORBIDDEN)
-
-        if pk is None: # List debriefs created by this encadrant
-            debriefs = Debrief.objects.filter(encadrant=request.user)
+        if request.user.role == 'encadrant':
+            if pk is None:
+                debriefs = Debrief.objects.filter(encadrant=request.user)
+                serializer = DebriefSerializer(debriefs, many=True, context={'request': request})
+                return Response(serializer.data)
+            else:
+                debrief = get_object_or_404(Debrief, pk=pk, encadrant=request.user)
+                serializer = DebriefSerializer(debrief, context={'request': request})
+                return Response(serializer.data)
+        elif request.user.role == 'etudiant':
+            # Students see only debriefs for their own responses
+            activity_code = request.query_params.get('activity_code')
+            debriefs = Debrief.objects.filter(reponse__etudiant=request.user)
+            if activity_code:
+                debriefs = debriefs.filter(reponse__activite__code_activite=activity_code.upper())
             serializer = DebriefSerializer(debriefs, many=True, context={'request': request})
             return Response(serializer.data)
-        else: # Retrieve a specific debrief owned by the encadrant
-            debrief = get_object_or_404(Debrief, pk=pk, encadrant=request.user)
-            serializer = DebriefSerializer(debrief, context={'request': request})
-            return Response(serializer.data)
+        else:
+            return Response({"error": "Accès non autorisé."}, status=status.HTTP_403_FORBIDDEN)
 
     # POST (From File 1 - includes permission and conflict check)
     

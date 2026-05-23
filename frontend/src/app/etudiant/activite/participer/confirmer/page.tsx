@@ -289,16 +289,23 @@ export default function Confirmer() {
               </div>
           )}
 
-          <div className="flex justify-center gap-4 mt-8 pt-4 border-t">
+          <div className="flex flex-wrap justify-center gap-4 mt-8 pt-4 border-t">
              <Button
                 variant="outline"
-                onClick={() => router.back()} // Changed to router.back() to allow edits
+                onClick={() => router.back()}
                 className="px-6 py-2"
              >
                 Modifier les réponses
              </Button>
              <Button
-                onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} // Kept this as the primary exit
+                variant="outline"
+                onClick={() => router.push(`/etudiant/activite/feedback?code=${encodeURIComponent(activityCode || '')}`)}
+                className="px-6 py-2 border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+                Voir les feedbacks de mon encadrant
+            </Button>
+             <Button
+                onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)}
                 className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white"
             >
                 Retour à la présentation de l'activité
