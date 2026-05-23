@@ -60,3 +60,6 @@ Thumbs.db
 # Miscellaneous
 *.7z
 *.zip
+*.pdf
+*.log
+.idx/

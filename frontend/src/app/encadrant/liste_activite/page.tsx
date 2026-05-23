@@ -67,11 +67,11 @@ const App = () => {
         withCredentials: true,
       });
       // Redirect to home page
-      window.location.href = 'http://localhost:3000';
+      router.push('/');
     } catch (err) {
       console.error("Logout error:", err);
       // Even if logout fails, redirect to home
-      window.location.href = 'http://localhost:3000';
+      router.push('/');
     }
   };
 

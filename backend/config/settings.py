@@ -106,7 +106,7 @@ REST_FRAMEWORK = {
     }
 
 
-ROOT_URLCONF = 'apiBack.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -124,7 +124,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'apiBack.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 # AUTH_USER_MODEL = 'api.User'
 
 # Database
