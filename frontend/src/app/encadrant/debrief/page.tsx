@@ -99,6 +99,7 @@ export default function DebriefPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debriefs, setDebriefs] = useState<Map<number, Debrief>>(new Map());
+  const [debriefInputs, setDebriefInputs] = useState<Record<number, string>>({});
 
   // Fetch activity and responses data
   useEffect(() => {
@@ -447,15 +448,15 @@ export default function DebriefPage() {
                                     <div>
                                       <span className="font-medium text-xl text-gray-700">Ajouter un débrief:</span>
                                       <textarea
-                                        id={`debrief-${response.id}`}
+                                        value={debriefInputs[response.id] ?? ""}
+                                        onChange={(e) => setDebriefInputs(prev => ({ ...prev, [response.id]: e.target.value }))}
                                         placeholder="Entrez votre feedback pour cette réponse..."
                                         className="w-full mt-2 p-3 border border-gray-300 rounded-md text-lg"
                                         rows={3}
                                       />
                                       <Button
                                         onClick={() => {
-                                          const textarea = document.getElementById(`debrief-${response.id}`) as HTMLTextAreaElement;
-                                          const feedback = textarea?.value?.trim();
+                                          const feedback = (debriefInputs[response.id] ?? "").trim();
                                           if (feedback) {
                                             handleCreateDebrief(response.id, feedback);
                                           } else {
