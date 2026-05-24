@@ -250,7 +250,7 @@ class ChatbotAPIView(APIView):
                 "response_mime_type": "text/plain",
             }
             model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
+                model_name="gemini-1.5-flash",
                 generation_config=generation_config,
             )
             prompt = f"""
@@ -380,7 +380,7 @@ class GeminiGenerateAffirmationsAPIView(APIView):
             }
 
             model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
+                model_name="gemini-1.5-flash",
                 generation_config=generation_config,
             )
 
@@ -456,7 +456,7 @@ class GeminiGenerateAffirmationsAPIView(APIView):
             print(f"Gemini Generation Error: {traceback.format_exc()}")
             # Fallback mock when API is disabled/unavailable (SERVICE_DISABLED or quota issues)
             error_str = str(e)
-            if "SERVICE_DISABLED" in error_str or "403" in error_str or "429" in error_str or not GENAI_AVAILABLE:
+            if "SERVICE_DISABLED" in error_str or "403" in error_str or "404" in error_str or "429" in error_str or not GENAI_AVAILABLE:
                 question = request.data.get('question', 'un sujet médical')
                 mock_affirmations = {
                     "affirmations": [
@@ -590,7 +590,7 @@ class GeminiMakeSingleAffirmationHarderAPIView(APIView):
             }
 
             model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
+                model_name="gemini-1.5-flash",
                 generation_config=generation_config,
             )
 
@@ -699,7 +699,7 @@ class GeminiMakeMultipleAffirmationsHarderAPIView(APIView):
             }
 
             model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
+                model_name="gemini-1.5-flash",
                 generation_config=generation_config,
             )
 
