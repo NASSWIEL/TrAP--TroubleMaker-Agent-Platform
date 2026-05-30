@@ -12,10 +12,35 @@ The platform has two interfaces:
 
 A key concept of the platform is that a large percentage of the affirmations are intentionally false yet plausible, in order to stimulate students’ critical thinking. This is achieved with the help of an LLM/SLM, which makes the sourced information more nuanced and believable. In this way, we leverage the potential of hallucinations to generate challenging affirmations.
 
+## Key Features
+
+- AI-generated false-but-plausible medical affirmations via Google Gemini
+- Graceful mock fallback when Gemini is unavailable or quota-exceeded
+- Session-based auth; students log in with email + activity code (no password)
+- Activity publishing workflow: draft → published
+- Mentor debrief system for per-student written feedback
+- EN/FR language switcher on all entry pages (English default, persisted in localStorage)
+- Full architecture reference in `design.md`
+
 ## Project Structure
 
-- `mysite/apiBack/` - Django REST API backend
-- `TroubleMaker/troublemaker-frontend/` - Next.js frontend application
+```
+backend/          Django 5.1 REST API (port 8000)
+  api/            models, views, serializers, urls
+  config/         Django settings and root urls
+  middleware/     custom CSRF disable middleware
+  requirements.txt
+  .env.example
+frontend/         Next.js 15 App Router (port 3000)
+  src/app/
+    encadrant/    mentor pages
+    etudiant/     student pages
+  src/contexts/   LanguageContext (i18n)
+  src/lib/i18n/   translations.ts (EN/FR)
+check_deps.sh / check_deps.ps1
+devserver.sh
+design.md         full architecture reference
+```
 
 ## Setup Instructions
 
@@ -56,51 +81,84 @@ If you prefer manual setup or need more control:
 #### Prerequisites
 
 - Python 3.8+
-- Node.js 16+
-- pip and npm/yarn
+- Node.js 18+
+- pip and npm
 
 ### Backend Setup (Django)
 
 1. Navigate to the backend directory:
-   ```bash
-   cd mysite/apiBack
+   ```powershell
+   cd backend
    ```
 2. Create and activate virtual environment:
-   ```bash
+   ```powershell
    python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   .venv\Scripts\activate      # Windows
+   # source .venv/bin/activate  # macOS/Linux
    ```
 3. Install dependencies:
-   ```bash
-   pip install -r ../../req.txt
+   ```powershell
+   pip install -r requirements.txt
    ```
-4. Run migrations:
-   ```bash
+4. Configure environment:
+   ```powershell
+   cp .env.example .env   # then fill SECRET_KEY and optionally GEMINI_API_KEY
+   ```
+5. Run migrations:
+   ```powershell
    python manage.py migrate
    ```
-5. Start the development server:
-   ```bash
-   python manage.py runserver
+6. Create an admin user:
+   ```powershell
+   python manage.py createsuperuser
+   ```
+7. Start the development server:
+   ```powershell
+   python manage.py runserver   # http://localhost:8000
    ```
 
 ### Frontend Setup (Next.js)
 
 1. Navigate to the frontend directory:
-   ```bash
-   cd TroubleMaker/troublemaker-frontend
+   ```powershell
+   cd frontend
    ```
 2. Install dependencies:
-   ```bash
+   ```powershell
    npm install
    ```
 3. Start the development server:
-   ```bash
-   npm run dev
+   ```powershell
+   npm run dev   # http://localhost:3000
    ```
 
-## API Endpoints
+## Environment Variables
 
-The Django backend provides REST API endpoints for the application.
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `SECRET_KEY` | Yes | Django secret key |
+| `DEBUG` | No | `True` for dev (default: `False`) |
+| `ALLOWED_HOSTS` | No | Comma-separated hosts (default: `localhost,127.0.0.1`) |
+| `GEMINI_API_KEY` | No | Google Gemini API key; mock fallback used if absent |
+
+### Frontend (optional)
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | API base URL for client-side calls (default: empty string, same-origin proxy) |
+| `API_BACKEND_URL` | Server-side proxy target (default: `http://localhost:8000`) |
+
+## Local URLs
+
+| URL | Description |
+|---|---|
+| `http://localhost:3000` | App entry — role selector |
+| `http://localhost:3000/encadrant/login` | Mentor login |
+| `http://localhost:3000/etudiant/login` | Student login |
+| `http://localhost:8000/admin/` | Django admin |
+| `http://localhost:8000/api/` | DRF browsable API |
 
 ## Available Scripts
 
@@ -120,4 +178,5 @@ The project includes several utility scripts to simplify development:
   - Can be configured with custom port via `$PORT` environment variable
 
 ## License
-this project is licensed under the AGPL-3.0 License. See the [LICENSE](LICENSE) file for details.
+
+This project is licensed under the AGPL-3.0 License. See the [LICENSE](LICENSE) file for details.
