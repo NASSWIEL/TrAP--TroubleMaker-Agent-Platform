@@ -3,9 +3,12 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CSSProperties } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const RoleSelection = () => {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleRoleSelection = (role: 'etudiant' | 'encadrant') => {
     if (role === 'etudiant') {
@@ -17,6 +20,7 @@ const RoleSelection = () => {
 
   return (
     <div style={styles.container}>
+      <LanguageSwitcher style={styles.langSwitcher} />
       <div style={styles.selectionContainer}>
         <Image
           src="/logo_LEMANS_UNIVERSITE-WEB.svg"
@@ -25,20 +29,20 @@ const RoleSelection = () => {
           height={53}
           style={styles.logo}
         />
-        <h1 style={styles.title}>Bienvenue sur TroubleMaker</h1>
-        <p style={styles.subtitle}>Veuillez sélectionner votre rôle :</p>
+        <h1 style={styles.title}>{t('landing.title')}</h1>
+        <p style={styles.subtitle}>{t('landing.subtitle')}</p>
         <div style={styles.buttonContainer}>
           <button
             onClick={() => handleRoleSelection('etudiant')}
             style={styles.button}
           >
-            Étudiant
+            {t('landing.student')}
           </button>
           <button
             onClick={() => handleRoleSelection('encadrant')}
             style={styles.button}
           >
-            Encadrant
+            {t('landing.supervisor')}
           </button>
         </div>
       </div>
@@ -46,7 +50,6 @@ const RoleSelection = () => {
   );
 };
 
-// --- Styles ---
 const styles: { [key: string]: CSSProperties } = {
   container: {
     display: "flex",
@@ -55,10 +58,16 @@ const styles: { [key: string]: CSSProperties } = {
     height: "100vh",
     backgroundColor: "#f8f8f8",
     flexDirection: "column",
+    position: "relative",
+  },
+  langSwitcher: {
+    position: "fixed",
+    top: "16px",
+    right: "16px",
   },
   selectionContainer: {
     padding: "40px 75px",
-    border: "1px solid #ccc", // Lighter border
+    border: "1px solid #ccc",
     borderRadius: "8px",
     backgroundColor: "#fff",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
@@ -84,23 +93,19 @@ const styles: { [key: string]: CSSProperties } = {
   },
   buttonContainer: {
     display: "flex",
-    gap: "20px", // Space between buttons
+    gap: "20px",
   },
   button: {
     padding: "12px 25px",
-    backgroundColor: "#2B2B2B", // Dark button
+    backgroundColor: "#2B2B2B",
     color: "#fff",
     fontWeight: 600,
-    border: "none", // No border for dark button
+    border: "none",
     borderRadius: "4px",
     cursor: "pointer",
     fontSize: "16px",
     transition: "background-color 0.3s ease",
   },
-  'button:hover': { // Example hover effect (won't work directly in inline styles)
-    backgroundColor: "#444",
-  }
 };
-
 
 export default RoleSelection;

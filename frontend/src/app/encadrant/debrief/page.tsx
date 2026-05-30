@@ -1,24 +1,14 @@
 "use client";
 
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  ColumnDef, ColumnFiltersState, SortingState,
+  flexRender, getCoreRowModel, getFilteredRowModel,
+  getPaginationRowModel, getSortedRowModel, useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -27,15 +17,15 @@ import { useSearchParams } from "next/navigation";
 import React from "react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-// Interface definitions based on backend models
 interface Activity {
   code_activite: string;
   titre: string;
   presentation_publique: string;
   description: string;
   encadrant: number;
-  type_affirmation_requise: number; // Ajouté pour la logique de mapping
+  type_affirmation_requise: number;
   affirmations_associes: Affirmation[];
 }
 
@@ -45,16 +35,12 @@ interface Affirmation {
   is_correct_vf?: boolean;
   explication?: string;
   nbr_reponses?: number;
-  option_1?: string;
-  option_2?: string;
-  option_3?: string;
-  option_4?: string;
   reponse_correcte_qcm?: number;
 }
 
 interface StudentResponse {
   id: number;
-  activite: string; // Activity code
+  activite: string;
   affirmation: Affirmation;
   etudiant: {
     id: number;
@@ -75,7 +61,6 @@ interface Debrief {
   encadrant: { id: number; [key: string]: unknown };
 }
 
-// Type for grouped responses by student
 type StudentResponseGroup = {
   email: string;
   student_name: string;
@@ -83,29 +68,27 @@ type StudentResponseGroup = {
   responses: StudentResponse[];
 };
 
-export default function DebriefPage() {
+function DebriefPage() {
   const searchParams = useSearchParams();
   const activityCode = searchParams.get('activity_code');
-  
+  const { t } = useLanguage();
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [expandedTexts, setExpandedTexts] = useState<Set<string>>(new Set());
-  
-  // State for backend data
+
   const [activity, setActivity] = useState<Activity | null>(null);
-  const [studentResponses, setStudentResponses] = useState<StudentResponse[]>([]);
   const [groupedResponses, setGroupedResponses] = useState<StudentResponseGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debriefs, setDebriefs] = useState<Map<number, Debrief>>(new Map());
   const [debriefInputs, setDebriefInputs] = useState<Record<number, string>>({});
 
-  // Fetch activity and responses data
   useEffect(() => {
     const fetchData = async () => {
       if (!activityCode) {
-        setError("Code d'activité manquant dans l'URL");
+        setError(t('debrief.missingCode'));
         setLoading(false);
         return;
       }
@@ -114,31 +97,25 @@ export default function DebriefPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch activity details
         const activityResponse = await axios.get<Activity>(
           `${API_BASE_URL}/api/activites/${activityCode}`,
           { withCredentials: true }
         );
         setActivity(activityResponse.data);
 
-        // Fetch student responses for this activity
         const responsesResponse = await axios.get<StudentResponse[]>(
           `${API_BASE_URL}/api/reponses/?activity_code=${activityCode}`,
           { withCredentials: true }
         );
-        setStudentResponses(responsesResponse.data);
 
-        // Group responses by student
         const grouped = groupResponsesByStudent(responsesResponse.data);
         setGroupedResponses(grouped);
 
-        // Fetch existing debriefs
         const debriefResponse = await axios.get<Debrief[]>(
           `${API_BASE_URL}/api/debriefs`,
           { withCredentials: true }
         );
-        
-        // Create a map of response_id -> debrief
+
         const debriefMap = new Map<number, Debrief>();
         debriefResponse.data.forEach(debrief => {
           debriefMap.set(debrief.reponse.id, debrief);
@@ -149,14 +126,14 @@ export default function DebriefPage() {
         console.error('Error fetching data:', err);
         if (axios.isAxiosError(err)) {
           if (err.response?.status === 403) {
-            setError("Accès non autorisé. Vérifiez que vous êtes connecté en tant qu'encadrant.");
+            setError(t('debrief.unauthorized'));
           } else if (err.response?.status === 404) {
-            setError("Activité introuvable.");
+            setError(t('debrief.notFound'));
           } else {
-            setError("Erreur lors du chargement des données.");
+            setError(t('debrief.loadError'));
           }
         } else {
-          setError("Erreur de connexion.");
+          setError(t('debrief.connectionError'));
         }
       } finally {
         setLoading(false);
@@ -166,10 +143,8 @@ export default function DebriefPage() {
     fetchData();
   }, [activityCode]);
 
-  // Helper function to group responses by student
   const groupResponsesByStudent = (responses: StudentResponse[]): StudentResponseGroup[] => {
     const grouped = new Map<number, StudentResponseGroup>();
-    
     responses.forEach(response => {
       const studentId = response.etudiant.id;
       if (!grouped.has(studentId)) {
@@ -182,70 +157,51 @@ export default function DebriefPage() {
       }
       grouped.get(studentId)!.responses.push(response);
     });
-    
     return Array.from(grouped.values());
   };
 
-  // Helper function to format response text
   const formatResponseText = (response: StudentResponse): string => {
-    if (!activity) {
-      return "Activité non trouvée";
-    }
+    if (!activity) return t('debrief.activityNotFound');
 
-    // Logique de conversion complexe similaire à la page de confirmation
     if (response.affirmation.nbr_reponses === 2) {
-      // Données stockées en Vrai/Faux
       if (activity.type_affirmation_requise === 2) {
-        // Interface était Vrai/Faux → affichage direct
-        return response.reponse_vf ? "Vrai" : "Faux";
+        return response.reponse_vf ? t('common.true') : t('common.false');
       } else if (activity.type_affirmation_requise === 4) {
-        // Interface était 4 niveaux mais stocké en Vrai/Faux → reconvertir
-        return response.reponse_vf ? "Toujours vrai" : "Toujours faux";
+        return response.reponse_vf ? t('common.alwaysTrue') : t('common.alwaysFalse');
       }
     } else if (response.affirmation.nbr_reponses === 4) {
-      // Données stockées en QCM
       const qcmMapping: { [key: number]: string } = {
-        1: "Toujours vrai",
-        2: "Généralement vrai",
-        3: "Généralement faux",
-        4: "Toujours faux"
+        1: t('common.alwaysTrue'),
+        2: t('common.generallyTrue'),
+        3: t('common.generallyFalse'),
+        4: t('common.alwaysFalse'),
       };
-      
       if (activity.type_affirmation_requise === 4) {
-        // Interface était 4 niveaux → affichage direct avec mapping
-        return qcmMapping[response.reponse_choisie_qcm!] || "Non répondu";
+        return qcmMapping[response.reponse_choisie_qcm!] || t('common.notAnswered');
       } else if (activity.type_affirmation_requise === 2) {
-        // Interface était Vrai/Faux mais stocké en QCM → reconvertir
-        if (response.reponse_choisie_qcm === 1 || response.reponse_choisie_qcm === 2) return "Vrai";
-        else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) return "Faux";
+        if (response.reponse_choisie_qcm === 1 || response.reponse_choisie_qcm === 2) return t('common.true');
+        else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) return t('common.false');
       }
     }
-    
-    return "Format inconnu";
+
+    return t('debrief.unknownFormat');
   };
 
-  // Function to create/update debrief
   const handleCreateDebrief = async (responseId: number, feedback: string) => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/debriefs`,
-        {
-          reponse_id: responseId,
-          feedback: feedback
-        },
+        { reponse_id: responseId, feedback: feedback },
         { withCredentials: true }
       );
-      
-      // Update debriefs map
       setDebriefs(prev => new Map(prev.set(responseId, response.data)));
-      
-      alert('Débrief créé avec succès!');
+      alert(t('debrief.created'));
     } catch (err) {
       console.error('Error creating debrief:', err);
       if (axios.isAxiosError(err) && err.response?.data?.error) {
-        alert(`Erreur: ${err.response.data.error}`);
+        alert(`${t('common.error')}: ${err.response.data.error}`);
       } else {
-        alert('Erreur lors de la création du débrief');
+        alert(t('debrief.createError'));
       }
     }
   };
@@ -253,11 +209,11 @@ export default function DebriefPage() {
   const columns: ColumnDef<StudentResponseGroup>[] = [
     {
       accessorKey: "email",
-      header: "Email de l'étudiant",
+      header: t('debrief.studentEmail'),
     },
     {
       accessorKey: "student_name",
-      header: "Nom de l'étudiant",
+      header: t('debrief.studentName'),
     },
     {
       id: "expand",
@@ -288,11 +244,8 @@ export default function DebriefPage() {
     const key = `${email}-${responseId}`;
     setExpandedTexts(prev => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -300,10 +253,7 @@ export default function DebriefPage() {
   const table = useReactTable({
     data: groupedResponses,
     columns,
-    state: {
-      sorting,
-      columnFilters,
-    },
+    state: { sorting, columnFilters },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -317,7 +267,7 @@ export default function DebriefPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
         <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-center items-center h-64">
-            <div className="text-xl text-gray-600">Chargement des données...</div>
+            <div className="text-xl text-gray-600">{t('debrief.loading')}</div>
           </div>
         </div>
       </div>
@@ -329,7 +279,7 @@ export default function DebriefPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
         <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-center items-center h-64">
-            <div className="text-xl text-red-600">Erreur: {error}</div>
+            <div className="text-xl text-red-600">{t('common.error')}: {error}</div>
           </div>
         </div>
       </div>
@@ -341,7 +291,7 @@ export default function DebriefPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
         <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-center items-center h-64">
-            <div className="text-xl text-gray-600">Activité introuvable</div>
+            <div className="text-xl text-gray-600">{t('debrief.activityNotFound')}</div>
           </div>
         </div>
       </div>
@@ -353,7 +303,7 @@ export default function DebriefPage() {
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800">Débriefing de l'activité</h1>
+            <h1 className="text-4xl font-bold text-gray-800">{t('debrief.title')}</h1>
             <h2 className="text-xl text-gray-600 mt-2">{activity.titre}</h2>
             <p className="text-sm text-gray-500 mt-1">Code: {activity.code_activite}</p>
           </div>
@@ -361,7 +311,7 @@ export default function DebriefPage() {
 
         <div className="mb-8">
           <Input
-            placeholder="Filtrer par email..."
+            placeholder={t('debrief.filterByEmail')}
             value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
             onChange={(e) => table.getColumn("email")?.setFilterValue(e.target.value)}
             className="max-w-sm px-4 py-3 text-xl"
@@ -375,12 +325,7 @@ export default function DebriefPage() {
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -409,16 +354,16 @@ export default function DebriefPage() {
                             return (
                               <div key={index} className="space-y-3 pb-6 border-b last:border-b-0 last:pb-0">
                                 <div className="flex gap-2 items-baseline">
-                                  <span className="font-medium whitespace-nowrap text-xl">Affirmation {response.affirmation.id}:</span>
+                                  <span className="font-medium whitespace-nowrap text-xl">{t('common.affirmation')} {response.affirmation.id}:</span>
                                   <span className="text-gray-600 text-xl">{response.affirmation.affirmation}</span>
                                 </div>
                                 <div className="flex gap-2 items-baseline">
-                                  <span className="font-medium whitespace-nowrap text-xl">Réponse:</span>
+                                  <span className="font-medium whitespace-nowrap text-xl">{t('debrief.response')}</span>
                                   <span className="text-gray-600 text-xl">{formatResponseText(response)}</span>
                                 </div>
                                 {response.justification && (
                                   <div className="flex gap-2 items-baseline">
-                                    <span className="font-medium whitespace-nowrap text-xl">Justification:</span>
+                                    <span className="font-medium whitespace-nowrap text-xl">{t('debrief.justification')}</span>
                                     <div className="text-gray-600">
                                       <p className="text-xl">
                                         {shouldTruncate && !isTextExpanded
@@ -430,27 +375,26 @@ export default function DebriefPage() {
                                           onClick={() => toggleTextExpansion(row.original.email, response.id)}
                                           className="text-blue-500 hover:text-blue-700 text-xl mt-2"
                                         >
-                                          {isTextExpanded ? "Voir moins" : "Voir plus"}
+                                          {isTextExpanded ? t('common.showLess') : t('common.showMore')}
                                         </button>
                                       )}
                                     </div>
                                   </div>
                                 )}
-                                
-                                {/* Debrief section */}
+
                                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                                   {existingDebrief ? (
                                     <div>
-                                      <span className="font-medium text-xl text-blue-800">Débrief existant:</span>
+                                      <span className="font-medium text-xl text-blue-800">{t('debrief.existingDebrief')}</span>
                                       <p className="text-blue-700 mt-2">{existingDebrief.feedback}</p>
                                     </div>
                                   ) : (
                                     <div>
-                                      <span className="font-medium text-xl text-gray-700">Ajouter un débrief:</span>
+                                      <span className="font-medium text-xl text-gray-700">{t('debrief.addDebrief')}</span>
                                       <textarea
                                         value={debriefInputs[response.id] ?? ""}
                                         onChange={(e) => setDebriefInputs(prev => ({ ...prev, [response.id]: e.target.value }))}
-                                        placeholder="Entrez votre feedback pour cette réponse..."
+                                        placeholder={t('debrief.placeholder')}
                                         className="w-full mt-2 p-3 border border-gray-300 rounded-md text-lg"
                                         rows={3}
                                       />
@@ -460,13 +404,13 @@ export default function DebriefPage() {
                                           if (feedback) {
                                             handleCreateDebrief(response.id, feedback);
                                           } else {
-                                            alert('Veuillez entrer un feedback avant de sauvegarder.');
+                                            alert(t('debrief.emptyFeedback'));
                                           }
                                         }}
                                         className="mt-2 bg-blue-600 hover:bg-blue-700"
                                       >
                                         <MessageSquare className="h-4 w-4 mr-2" />
-                                        Sauvegarder le débrief
+                                        {t('debrief.save')}
                                       </Button>
                                     </div>
                                   )}
@@ -486,9 +430,9 @@ export default function DebriefPage() {
 
         <div className="flex items-center justify-between py-4">
           <div className="text-sm text-gray-700">
-            {groupedResponses.length === 0 
-              ? "Aucune réponse d'étudiant trouvée" 
-              : `${groupedResponses.length} étudiant(s) avec des réponses`}
+            {groupedResponses.length === 0
+              ? t('debrief.noResponses')
+              : `${groupedResponses.length} ${t('debrief.studentsCount')}`}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -498,7 +442,7 @@ export default function DebriefPage() {
               disabled={!table.getCanPreviousPage()}
               className="text-xl px-6 py-3"
             >
-              Précédent
+              {t('common.previous')}
             </Button>
             <Button
               variant="outline"
@@ -507,11 +451,15 @@ export default function DebriefPage() {
               disabled={!table.getCanNextPage()}
               className="text-xl px-6 py-3"
             >
-              Suivant
+              {t('common.next')}
             </Button>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+export default function DebriefPageWrapper() {
+  return <Suspense><DebriefPage /></Suspense>;
 }

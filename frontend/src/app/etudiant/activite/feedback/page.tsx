@@ -1,20 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton";
 import { API_BASE_URL } from "@/lib/api";
 import { MessageSquare, CheckCircle, Clock } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AffirmationApi {
     id: number;
     affirmation: string;
     nbr_reponses: 2 | 4;
-    option_1?: string | null;
-    option_2?: string | null;
-    option_3?: string | null;
-    option_4?: string | null;
 }
 
 interface ActiviteApiData {
@@ -41,17 +38,11 @@ interface DebriefApiData {
     };
 }
 
-const qcmNumberToText: { [key: number]: string } = {
-    1: "Toujours vrai",
-    2: "Généralement vrai",
-    3: "Généralement faux",
-    4: "Toujours faux",
-};
-
-export default function FeedbackEtudiant() {
+function FeedbackEtudiant() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activityCode = searchParams.get('code');
+    const { t } = useLanguage();
 
     const [activite, setActivite] = useState<ActiviteApiData | null>(null);
     const [reponses, setReponses] = useState<Record<number, ReponseApiData>>({});
@@ -59,9 +50,16 @@ export default function FeedbackEtudiant() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const qcmNumberToText: { [key: number]: string } = {
+        1: t('common.alwaysTrue'),
+        2: t('common.generallyTrue'),
+        3: t('common.generallyFalse'),
+        4: t('common.alwaysFalse'),
+    };
+
     useEffect(() => {
         if (!activityCode) {
-            setError("Code d'activité manquant.");
+            setError(t('feedback.missingCode'));
             setLoading(false);
             return;
         }
@@ -85,7 +83,6 @@ export default function FeedbackEtudiant() {
                 });
                 setReponses(reponsesRecord);
 
-                // Key debriefs by affirmation id via reponse
                 const debriefsRecord: Record<number, DebriefApiData> = {};
                 (debriefsRes.data || []).forEach((d: DebriefApiData) => {
                     const affId = d.reponse?.affirmation?.id;
@@ -97,12 +94,12 @@ export default function FeedbackEtudiant() {
                 console.error("Error fetching feedback data:", err);
                 if (axios.isAxiosError(err) && err.response) {
                     if (err.response.status === 403) {
-                        setError("Session expirée. Veuillez vous reconnecter.");
+                        setError(t('feedback.expired'));
                     } else {
-                        setError(err.response.data?.error || "Erreur lors du chargement des feedbacks.");
+                        setError(err.response.data?.error || t('feedback.loadError'));
                     }
                 } else {
-                    setError("Erreur réseau ou serveur inaccessible.");
+                    setError(t('common.networkError'));
                 }
             } finally {
                 setLoading(false);
@@ -112,16 +109,16 @@ export default function FeedbackEtudiant() {
     }, [activityCode]);
 
     const getDisplayAnswer = (affirmation: AffirmationApi, response: ReponseApiData | undefined): string => {
-        if (!response) return "Non répondu";
+        if (!response) return t('common.notAnswered');
         if (affirmation.nbr_reponses === 2) {
-            if (response.reponse_vf === true) return "Vrai";
-            if (response.reponse_vf === false) return "Faux";
+            if (response.reponse_vf === true) return t('common.true');
+            if (response.reponse_vf === false) return t('common.false');
         } else if (affirmation.nbr_reponses === 4) {
             if (response.reponse_choisie_qcm !== null && qcmNumberToText[response.reponse_choisie_qcm]) {
                 return qcmNumberToText[response.reponse_choisie_qcm];
             }
         }
-        return "Non répondu";
+        return t('common.notAnswered');
     };
 
     if (loading) {
@@ -145,7 +142,7 @@ export default function FeedbackEtudiant() {
             <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
                 <p className="text-red-600 text-xl">{error}</p>
                 <Button onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} className="mt-4">
-                    Retour à l'activité
+                    {t('feedback.backToActivity')}
                 </Button>
             </div>
         );
@@ -155,6 +152,7 @@ export default function FeedbackEtudiant() {
 
     const affirmationsWithReponses = activite.affirmations_associes.filter(a => reponses[a.id]);
     const nbDebriefs = affirmationsWithReponses.filter(a => debriefs[a.id]).length;
+    const nbReponses = affirmationsWithReponses.length;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
@@ -162,11 +160,11 @@ export default function FeedbackEtudiant() {
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
                     <div className="flex items-center gap-3 mb-2">
                         <MessageSquare className="h-7 w-7 text-blue-600" />
-                        <h1 className="text-2xl font-bold text-gray-800">Feedbacks de votre encadrant</h1>
+                        <h1 className="text-2xl font-bold text-gray-800">{t('feedback.title')}</h1>
                     </div>
                     <h2 className="text-lg text-gray-600 font-medium mb-1">{activite.titre} — {activite.code_activite}</h2>
                     <p className="text-sm text-gray-500">
-                        {nbDebriefs} feedback{nbDebriefs > 1 ? 's' : ''} reçu{nbDebriefs > 1 ? 's' : ''} sur {affirmationsWithReponses.length} réponse{affirmationsWithReponses.length > 1 ? 's' : ''}
+                        {t('feedback.count', { n: nbDebriefs, m: nbReponses })}
                     </p>
                 </div>
 
@@ -180,17 +178,17 @@ export default function FeedbackEtudiant() {
                             <div key={affirmation.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                                 <div className="flex items-start justify-between mb-3">
                                     <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                                        Affirmation {index + 1}
+                                        {t('common.affirmation')} {index + 1}
                                     </span>
                                     {debrief ? (
                                         <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                                             <CheckCircle className="h-3 w-3" />
-                                            Feedback reçu
+                                            {t('feedback.feedbackReceived')}
                                         </span>
                                     ) : (
                                         <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
                                             <Clock className="h-3 w-3" />
-                                            En attente
+                                            {t('feedback.pending')}
                                         </span>
                                     )}
                                 </div>
@@ -198,21 +196,21 @@ export default function FeedbackEtudiant() {
                                 <p className="text-gray-800 font-medium mb-4">{affirmation.affirmation}</p>
 
                                 <div className="bg-gray-50 rounded-lg p-4 mb-3">
-                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Votre réponse</p>
+                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('feedback.yourAnswer')}</p>
                                     <p className="text-blue-700 font-semibold">{displayAnswer}</p>
                                     {response?.justification && (
-                                        <p className="text-sm text-gray-600 mt-2 italic">"{response.justification}"</p>
+                                        <p className="text-sm text-gray-600 mt-2 italic">&quot;{response.justification}&quot;</p>
                                     )}
                                 </div>
 
                                 {debrief ? (
                                     <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-                                        <p className="text-xs text-blue-600 uppercase font-semibold mb-1">Feedback de l'encadrant</p>
+                                        <p className="text-xs text-blue-600 uppercase font-semibold mb-1">{t('feedback.supervisorFeedback')}</p>
                                         <p className="text-gray-800 whitespace-pre-wrap">{debrief.feedback}</p>
                                     </div>
                                 ) : (
                                     <div className="bg-amber-50 border-l-4 border-amber-300 rounded-lg p-4">
-                                        <p className="text-sm text-amber-700">Votre encadrant n'a pas encore envoyé de feedback pour cette réponse.</p>
+                                        <p className="text-sm text-amber-700">{t('feedback.noFeedbackYet')}</p>
                                     </div>
                                 )}
                             </div>
@@ -221,7 +219,7 @@ export default function FeedbackEtudiant() {
 
                     {affirmationsWithReponses.length === 0 && (
                         <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
-                            Aucune réponse soumise pour cette activité.
+                            {t('feedback.noResponses')}
                         </div>
                     )}
                 </div>
@@ -232,10 +230,14 @@ export default function FeedbackEtudiant() {
                         variant="outline"
                         className="px-6"
                     >
-                        Retour à l'activité
+                        {t('feedback.backToActivity')}
                     </Button>
                 </div>
             </div>
         </div>
     );
+}
+
+export default function FeedbackEtudiantWrapper() {
+  return <Suspense><FeedbackEtudiant /></Suspense>;
 }

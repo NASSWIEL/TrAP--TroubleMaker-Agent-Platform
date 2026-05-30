@@ -1,20 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AffirmationApi {
     id: number;
     affirmation: string;
     nbr_reponses: 2 | 4;
-    option_1?: string | null;
-    option_2?: string | null;
-    option_3?: string | null;
-    option_4?: string | null;
 }
 
 interface ActiviteApiData {
@@ -35,17 +32,11 @@ interface ReponseApiData {
     timestamp?: string;
 }
 
-const qcmNumberToText: { [key: number]: string } = {
-    1: "Toujours vrai",
-    2: "Généralement vrai", 
-    3: "Généralement faux",
-    4: "Toujours faux",
-};
-
-export default function Confirmer() {
+function Confirmer() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activityCode = searchParams.get('code');
+  const { t } = useLanguage();
 
   const [activite, setActivite] = useState<ActiviteApiData | null>(null);
   const [reponses, setReponses] = useState<Record<number, ReponseApiData>>({});
@@ -55,9 +46,16 @@ export default function Confirmer() {
   const [expandedTexts, setExpandedTexts] = useState<{ [key: number]: boolean }>({});
   const affirmationsPerPage = 2;
 
+  const qcmNumberToText: { [key: number]: string } = {
+      1: t('common.alwaysTrue'),
+      2: t('common.generallyTrue'),
+      3: t('common.generallyFalse'),
+      4: t('common.alwaysFalse'),
+  };
+
   useEffect(() => {
     if (!activityCode) {
-      setError("Code d'activité manquant.");
+      setError(t('confirmer.missingCode'));
       setLoading(false);
       return;
     }
@@ -72,7 +70,7 @@ export default function Confirmer() {
         ]);
 
         if (activityResponse.status !== 200 || !activityResponse.data) {
-          throw new Error("Impossible de charger l'activité.");
+          throw new Error(t('confirmer.loadError'));
         }
         const fetchedActivite: ActiviteApiData = activityResponse.data;
         setActivite(fetchedActivite);
@@ -87,8 +85,6 @@ export default function Confirmer() {
                                   : null;
             if (affirmationId !== null) {
                 responsesRecord[affirmationId] = response;
-            } else {
-                console.warn("Skipping response object with missing or invalid affirmation ID:", response);
             }
         });
         setReponses(responsesRecord);
@@ -97,14 +93,14 @@ export default function Confirmer() {
         console.error("Error fetching confirmation data:", err);
          if (axios.isAxiosError(err) && err.response) {
            if (err.response.status === 404) {
-               setError(`L'activité ou les réponses pour "${activityCode}" n'ont pas été trouvées.`);
+               setError(t('confirmer.notFoundCode', { code: activityCode }));
            } else if (err.response.status === 403) {
-                setError("Vous n'êtes pas autorisé à voir ces données.");
+                setError(t('confirmer.unauthorized'));
            } else {
-               setError(err.response.data?.error || err.response.data?.detail || "Erreur lors du chargement des données de confirmation.");
+               setError(err.response.data?.error || err.response.data?.detail || t('confirmer.loadDataError'));
            }
         } else {
-          setError("Erreur réseau ou serveur inaccessible.");
+          setError(t('common.networkError'));
         }
       } finally {
         setLoading(false);
@@ -162,7 +158,7 @@ export default function Confirmer() {
          <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
              <p className="text-red-600 text-xl">{error}</p>
              <Button onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} className="mt-4">
-                Retour à la présentation de l'activité
+                {t('confirmer.backToActivity')}
              </Button>
          </div>
      );
@@ -171,9 +167,9 @@ export default function Confirmer() {
   if (!activite) {
      return (
          <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-             <p className="text-yellow-600 text-xl">Aucune donnée d'activité trouvée.</p>
+             <p className="text-yellow-600 text-xl">{t('confirmer.noData')}</p>
               <Button onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} className="mt-4">
-                Retour à la présentation de l'activité
+                {t('confirmer.backToActivity')}
              </Button>
          </div>
      );
@@ -184,7 +180,7 @@ export default function Confirmer() {
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Confirmation des réponses</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{t('confirmer.title')}</h1>
             <h2 className="text-xl text-gray-600 mt-2 font-bold">{activite.titre} ({activite.code_activite})</h2>
           </div>
         </div>
@@ -192,34 +188,27 @@ export default function Confirmer() {
         <div className="space-y-6">
           {currentAffirmations.map((affirmation) => {
               const response = reponses[affirmation.id];
-              const justification = response?.justification || "(Aucune explication fournie)";
+              const justification = response?.justification || t('confirmer.noExplanation');
               const isExpanded = expandedTexts[affirmation.id] || false;
-              let displayAnswer = "Non répondu ou Je ne sais pas";
+              let displayAnswer = t('common.notAnsweredOrDontKnow');
 
               if (response) {
-                  // Logique de conversion complexe : comment les données sont stockées VS comment l'utilisateur les a vues
                   if (affirmation.nbr_reponses === 2) {
-                      // Données stockées en Vrai/Faux
                       if (activite.type_affirmation_requise === 2) {
-                          // Interface était Vrai/Faux → affichage direct
-                          if (response.reponse_vf === true) displayAnswer = "Vrai";
-                          else if (response.reponse_vf === false) displayAnswer = "Faux";
+                          if (response.reponse_vf === true) displayAnswer = t('common.true');
+                          else if (response.reponse_vf === false) displayAnswer = t('common.false');
                       } else if (activite.type_affirmation_requise === 4) {
-                          // Interface était 4 niveaux mais stocké en Vrai/Faux → reconvertir
-                          if (response.reponse_vf === true) displayAnswer = "Toujours vrai";
-                          else if (response.reponse_vf === false) displayAnswer = "Toujours faux";
+                          if (response.reponse_vf === true) displayAnswer = t('common.alwaysTrue');
+                          else if (response.reponse_vf === false) displayAnswer = t('common.alwaysFalse');
                       }
                   } else if (affirmation.nbr_reponses === 4) {
-                      // Données stockées en QCM
                       if (activite.type_affirmation_requise === 4) {
-                          // Interface était 4 niveaux → affichage direct avec mapping
                           if (response.reponse_choisie_qcm !== null && qcmNumberToText[response.reponse_choisie_qcm]) {
                               displayAnswer = qcmNumberToText[response.reponse_choisie_qcm];
                           }
                       } else if (activite.type_affirmation_requise === 2) {
-                          // Interface était Vrai/Faux mais stocké en QCM → reconvertir
-                          if (response.reponse_choisie_qcm === 1 || response.reponse_choisie_qcm === 2) displayAnswer = "Vrai";
-                          else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) displayAnswer = "Faux";
+                          if (response.reponse_choisie_qcm === 1 || response.reponse_choisie_qcm === 2) displayAnswer = t('common.true');
+                          else if (response.reponse_choisie_qcm === 3 || response.reponse_choisie_qcm === 4) displayAnswer = t('common.false');
                       }
                   }
               }
@@ -228,7 +217,7 @@ export default function Confirmer() {
                   <div key={affirmation.id} className="bg-gray-50 p-6 rounded-lg">
                       <div className="flex items-center gap-2 mb-4">
                           <span className="font-semibold text-gray-600">
-                              Affirmation {activite.affirmations_associes.findIndex(a => a.id === affirmation.id) + 1}
+                              {t('confirmer.statementN', { n: activite.affirmations_associes.findIndex(a => a.id === affirmation.id) + 1 })}
                           </span>
                       </div>
                       <p className="text-lg font-medium text-gray-800 mb-4">
@@ -236,13 +225,11 @@ export default function Confirmer() {
                       </p>
                       <div className="bg-white p-4 rounded border mt-4">
                           <div className="mb-4">
-                              <span className="font-semibold">Votre réponse: </span>
-                              <span className="text-blue-600 font-medium">
-                                  {displayAnswer}
-                              </span>
+                              <span className="font-semibold">{t('confirmer.yourAnswer')} </span>
+                              <span className="text-blue-600 font-medium">{displayAnswer}</span>
                           </div>
                           <div>
-                              <span className="font-semibold">Votre explication: </span>
+                              <span className="font-semibold">{t('confirmer.yourExplanation')} </span>
                               <p className="mt-2 text-gray-600 whitespace-pre-wrap">
                                   {isExpanded
                                       ? justification
@@ -254,7 +241,7 @@ export default function Confirmer() {
                                       onClick={() => toggleExpand(affirmation.id)}
                                       className="text-blue-500 hover:text-blue-700 text-sm mt-2"
                                   >
-                                      {isExpanded ? "Voir moins" : "Voir plus"}
+                                      {isExpanded ? t('common.showLess') : t('common.showMore')}
                                   </button>
                               )}
                           </div>
@@ -272,10 +259,10 @@ export default function Confirmer() {
                       className="px-4 py-2"
                   >
                       <ChevronLeft className="h-4 w-4 mr-2" />
-                      Précédent
+                      {t('common.previous')}
                   </Button>
                   <span className="text-sm font-medium">
-                      Page {currentPage + 1} sur {totalPages}
+                      {t('confirmer.pageN', { n: currentPage + 1, total: totalPages })}
                   </span>
                   <Button
                       variant="outline"
@@ -283,36 +270,36 @@ export default function Confirmer() {
                       disabled={currentPage === totalPages - 1}
                       className="px-4 py-2"
                   >
-                      Suivant
+                      {t('common.next')}
                       <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
               </div>
           )}
 
           <div className="flex flex-wrap justify-center gap-4 mt-8 pt-4 border-t">
-             <Button
-                variant="outline"
-                onClick={() => router.back()}
-                className="px-6 py-2"
-             >
-                Modifier les réponses
+             <Button variant="outline" onClick={() => router.back()} className="px-6 py-2">
+                {t('confirmer.editAnswers')}
              </Button>
              <Button
                 variant="outline"
                 onClick={() => router.push(`/etudiant/activite/feedback?code=${encodeURIComponent(activityCode || '')}`)}
                 className="px-6 py-2 border-blue-300 text-blue-600 hover:bg-blue-50"
             >
-                Voir les feedbacks de mon encadrant
+                {t('confirmer.viewFeedback')}
             </Button>
              <Button
                 onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)}
                 className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white"
             >
-                Retour à la présentation de l'activité
+                {t('confirmer.backToPresentation')}
             </Button>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+export default function ConfirmerWrapper() {
+  return <Suspense><Confirmer /></Suspense>;
 }

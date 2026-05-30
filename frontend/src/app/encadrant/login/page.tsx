@@ -6,9 +6,12 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { CSSProperties } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const EncadrantLogin = () => {
     const router = useRouter();
+    const { t } = useLanguage();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -19,14 +22,13 @@ const EncadrantLogin = () => {
         setError("");
 
         if (!email || !password) {
-            setError("Veuillez remplir tous les champs.");
+            setError(t('common.fillAllFields'));
             return;
         }
 
         setLoading(true);
 
         try {
-            // NOTE: Update this endpoint when created in the backend
             const response = await axios.post(`${API_BASE_URL}/api/encadrant/login`, {
                 email: email,
                 password: password,
@@ -35,20 +37,18 @@ const EncadrantLogin = () => {
             });
 
             if (response.status === 200 && response.data) {
-                console.log("Encadrant Login successful:", response.data);
-                // Redirect to the encadrant dashboard or relevant page
                 router.push('/encadrant/liste_activite');
             } else {
-                setError("Réponse invalide du serveur.");
+                setError(t('common.serverInvalidResponse'));
             }
 
         } catch (err: unknown) {
             console.error("Encadrant Login error:", err);
             if (axios.isAxiosError(err) && err.response) {
-                const backendError = err.response.data?.error || "Email ou mot de passe incorrect.";
+                const backendError = err.response.data?.error || t('encadrantLogin.wrongCredentials');
                 setError(backendError);
             } else {
-                setError("Impossible de contacter le serveur. Vérifiez votre connexion.");
+                setError(t('common.serverUnreachable'));
             }
         } finally {
             setLoading(false);
@@ -57,6 +57,7 @@ const EncadrantLogin = () => {
 
     return (
         <div style={styles.container}>
+            <LanguageSwitcher style={styles.langSwitcher} />
             <div style={styles.formContainer}>
                 <Image
                     src="/logo_LEMANS_UNIVERSITE-WEB.svg"
@@ -65,12 +66,12 @@ const EncadrantLogin = () => {
                     height={53}
                     style={styles.logo}
                 />
-                <h1 style={styles.title}>Connexion Encadrant</h1>
+                <h1 style={styles.title}>{t('encadrantLogin.title')}</h1>
                 <form onSubmit={handleSubmit}>
                     {error && <p style={styles.error}>{error}</p>}
                     <div style={styles.formGroup}>
                         <label htmlFor="email" style={styles.label}>
-                            Email :
+                            {t('encadrantLogin.email')}
                         </label>
                         <br />
                         <input
@@ -85,7 +86,7 @@ const EncadrantLogin = () => {
                     </div>
                     <div style={styles.formGroup}>
                         <label htmlFor="password" style={styles.label}>
-                            Mot de passe :
+                            {t('encadrantLogin.password')}
                         </label>
                         <br />
                         <input
@@ -99,15 +100,13 @@ const EncadrantLogin = () => {
                         />
                     </div>
 
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                        }}
-                    >
-                        <button type="submit" style={loading ? { ...styles.button, ...styles['button:disabled'] } : styles.button} disabled={loading}>
-                            {loading ? "Connexion..." : "Se connecter"}
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <button
+                            type="submit"
+                            style={loading ? { ...styles.button, ...styles['button:disabled'] } : styles.button}
+                            disabled={loading}
+                        >
+                            {loading ? t('encadrantLogin.signingIn') : t('encadrantLogin.signIn')}
                         </button>
                     </div>
                 </form>
@@ -116,7 +115,6 @@ const EncadrantLogin = () => {
     );
 };
 
-// --- Styles (similar to EtudiantLogin) ---
 const styles: { [key: string]: CSSProperties } = {
     container: {
         display: "flex",
@@ -125,6 +123,12 @@ const styles: { [key: string]: CSSProperties } = {
         height: "100vh",
         backgroundColor: "#f8f8f8",
         flexDirection: "column",
+        position: "relative",
+    },
+    langSwitcher: {
+        position: "fixed",
+        top: "16px",
+        right: "16px",
     },
     formContainer: {
         padding: "25px 75px",

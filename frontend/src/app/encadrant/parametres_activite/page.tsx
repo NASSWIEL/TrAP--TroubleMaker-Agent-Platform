@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Student { // Assuming a structure for student objects
   id: number;
@@ -47,6 +48,7 @@ interface Activity {
 
 const GererActivites = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const activityCodeParam = searchParams.get("code");
 
@@ -341,7 +343,7 @@ const GererActivites = () => {
       ));
 
       cancelEditingAffirmation();
-      alert("Affirmation modifiée avec succès !");
+      alert(t('parametresActivite.modifiedSuccess'));
     } catch (error) {
       console.error("Erreur lors de la modification de l'affirmation:", error);
       alert(`Erreur lors de la modification: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -369,7 +371,7 @@ const GererActivites = () => {
       setAllAffirmations(prev => prev.filter(aff => aff.id !== affirmationId));
       setSelectedAffirmations(prev => prev.filter(aff => aff.id !== affirmationId));
 
-      alert("Affirmation supprimée avec succès !");
+      alert(t('parametresActivite.deletedSuccess'));
     } catch (error) {
       console.error("Erreur lors de la suppression de l'affirmation:", error);
       alert(`Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -428,7 +430,7 @@ const GererActivites = () => {
 
   const handleDeleteActivity = () => {
     if (!currentActivityCode) {
-        alert("Aucun code d'activité spécifié pour la suppression.");
+        alert(t('parametresActivite.missingDeleteCode'));
         return;
     }
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) {
@@ -659,17 +661,17 @@ const GererActivites = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
       <header className="bg-white shadow-md p-4 mb-6 flex justify-center">
         <h1 className="text-4xl font-bold text-gray-800">
-          {activityCodeParam ? "Paramètres de l'Activité" : "Créer une Activité"}
+          {activityCodeParam ? t('parametresActivite.title') : t('creerActivite.title')}
         </h1>
       </header>
 
       <div className="space-y-6">
         <div className="bg-white shadow-md p-4 md:p-6 rounded-lg">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Détails de l'activité</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">{t('activityForm.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Type d'apprenant :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.learnerType')}</label>
                 <div className="flex space-x-4">
                   <label className="flex items-center space-x-2 text-lg">
                     <input 
@@ -680,27 +682,27 @@ const GererActivites = () => {
                       onChange={(e) => setLearnerType(e.target.value)}
                       className="w-4 h-4"
                     />
-                    <span>Interne</span>
+                    <span>{t('activityForm.internal')}</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
-                    <input 
-                      type="radio" 
-                      name="learnerType" 
-                      value="externe" 
+                    <input
+                      type="radio"
+                      name="learnerType"
+                      value="externe"
                       checked={learnerType === "externe"}
                       onChange={(e) => setLearnerType(e.target.value)}
                       className="w-4 h-4"
                     />
-                    <span>Externe</span>
+                    <span>{t('activityForm.external')}</span>
                   </label>
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Formation concernée :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.formation')}</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Tapez pour rechercher ou créer une formation..."
+                    placeholder={t('activityForm.formationPlaceholder')}
                     className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formationInput}
                     onChange={(e) => updateFormationInput(e.target.value)}
@@ -729,59 +731,59 @@ const GererActivites = () => {
                   {/* Status indicator */}
                   <div className="mt-1 text-sm">
                     {selectedCategoryId ? (
-                      <span className="text-green-600">✓ Formation existante sélectionnée</span>
+                      <span className="text-green-600">{t('activityForm.existingFormation')}</span>
                     ) : formationInput.trim() ? (
-                      <span className="text-blue-600">💡 Nouvelle formation sera créée</span>
+                      <span className="text-blue-600">{t('activityForm.newFormation')}</span>
                     ) : null}
                   </div>
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Titre de l'activité :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityTitle')}</label>
                 <input type="text" placeholder="formation generale" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={activityTitle} onChange={(e) => setActivityTitle(e.target.value)} autoComplete="off"/>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Code de l'activité :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityCode')}</label>
                 <input type="text" placeholder="SECU1" className={`w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${activityCodeParam ? 'bg-gray-100' : ''}`} value={currentActivityCode} onChange={(e) => setCurrentActivityCode(e.target.value.toUpperCase())} readOnly={!!activityCodeParam} autoComplete="off"/>
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Degré de véracité :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.veracityDegree')}</label>
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
                   <p className="text-sm text-blue-700">
-                    <strong>Note :</strong> Ce paramètre détermine comment les étudiants répondront, mais les affirmations restent toujours soit vraies soit fausses.
+                    <strong>{t('activityForm.noteLabel')}</strong> {t('activityForm.veracityNote')}
                   </p>
                 </div>
                 <div className="flex flex-col space-y-2">
                   <label className="flex items-center space-x-2 text-lg">
                     <input type="radio" name="typeAffirmationRequise" value={2} checked={typeAffirmationRequise === 2} onChange={() => setTypeAffirmationRequise(2)} className="w-4 h-4"/>
-                    <span>Binaire (Vrai / Faux) - Les étudiants répondent par Vrai ou Faux</span>
+                    <span>{t('activityForm.binary')}</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
                     <input type="radio" name="typeAffirmationRequise" value={4} checked={typeAffirmationRequise === 4} onChange={() => setTypeAffirmationRequise(4)} className="w-4 h-4"/>
-                    <span>Gradué (4 niveaux) - Les étudiants choisissent leur degré de certitude</span>
+                    <span>{t('activityForm.graduated')}</span>
                   </label>
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Liste d'emails autorisés :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.allowedEmails')}</label>
                 <textarea placeholder="amine@gmail.com" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows={5} value={etudiantsAutorisesEmails} onChange={(e) => setEtudiantsAutorisesEmails(e.target.value)} autoComplete="off"/>
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Présentation publique :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.publicPresentation')}</label>
                 <textarea placeholder="une presentation" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows={5} value={publicPresentation} onChange={(e) => setPublicPresentation(e.target.value)} autoComplete="off"/>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Description (encadrant) :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.supervisorDescription')}</label>
                 <textarea placeholder="une presentation" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} autoComplete="off"/>
               </div>
                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-lg">Statut de l'activité :</label>
+                  <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityStatus')}</label>
                   <p className={`px-4 py-2 text-lg rounded-md font-medium ${isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {isPublished ? "Publiée (Lancée)" : "Non publiée (Brouillon)"}
+                      {isPublished ? t('activityForm.publishedStatus') : t('activityForm.draftStatus')}
                   </p>
                </div>
             </div>
@@ -795,7 +797,7 @@ const GererActivites = () => {
             onDrop={(event) => handleDrop(event, "selected")}
           >
             <h2 className="text-2xl font-bold mb-4 text-center">Affirmations sélectionnées ({selectedAffirmations.length})</h2>
-            {selectedAffirmations.length === 0 && <p className="text-gray-500 text-center py-4">Glissez des affirmations ici.</p>}
+            {selectedAffirmations.length === 0 && <p className="text-gray-500 text-center py-4">{t('activityForm.dragHere')}</p>}
             <ul className="space-y-3">
               {selectedAffirmations.map((affirmation) => (
                 <li
@@ -909,18 +911,18 @@ const GererActivites = () => {
                   if (currentActivityCode) {
                     router.push(`/encadrant/generer?activity_code=${encodeURIComponent(currentActivityCode)}`);
                   } else {
-                    alert("Code d'activité manquant. Impossible de générer des affirmations.");
+                    alert(t('parametresActivite.missingCodeAlert'));
                   }
                 }}
               >
-                <Plus size={18} className="mr-1.5" /> Générer
+                <Plus size={18} className="mr-1.5" /> {t('activityForm.generate')}
               </button>
             </div>
             <div className="mb-3">
               <input
                 type="text"
                 className="w-full p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-500"
-                placeholder="Rechercher une affirmation..."
+                placeholder={t('activityForm.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoComplete="off" 
@@ -929,15 +931,15 @@ const GererActivites = () => {
             <div className="h-[350px] overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50/50">
              {allAffirmations.length === 0 && searchQuery === "" && (
                <div className="text-center py-4">
-                 <p className="text-gray-500">Aucune affirmation disponible.</p>
-                 <p className="text-sm text-gray-400 mt-2">Vérifiez votre connexion ou créez des affirmations.</p>
+                 <p className="text-gray-500">{t('activityForm.noAffirmations')}</p>
+                 <p className="text-sm text-gray-400 mt-2">{t('activityForm.checkConnection')}</p>
                </div>
              )}
              {filteredAffirmationsFromDB.length === 0 && searchQuery !== "" && (
                <p className="text-gray-500 text-center py-4">Aucune affirmation ne correspond à "{searchQuery}".</p>
              )}
              {allAffirmations.length > 0 && availableAffirmations.length === 0 && searchQuery === "" && (
-               <p className="text-blue-500 text-center py-4">Toutes les affirmations sont déjà sélectionnées!</p>
+               <p className="text-blue-500 text-center py-4">{t('activityForm.allSelected')}</p>
              )}
               <ul className="space-y-3">
                 {filteredAffirmationsFromDB.map((affirmation) => (
@@ -1065,7 +1067,7 @@ const GererActivites = () => {
             onClick={handleSubmit}
             disabled={!activityTitle.trim() || (!activityCodeParam && !currentActivityCode.trim())}
           >
-            {activityCodeParam ? "Enregistrer les modifications" : "Créer et Enregistrer"}
+            {activityCodeParam ? t('parametresActivite.submit') : t('creerActivite.submit')}
           </button>
         </div>
       </div>
@@ -1073,4 +1075,6 @@ const GererActivites = () => {
   );
 };
 
-export default GererActivites;
+export default function GererActivitesWrapper() {
+  return <Suspense><GererActivites /></Suspense>;
+}

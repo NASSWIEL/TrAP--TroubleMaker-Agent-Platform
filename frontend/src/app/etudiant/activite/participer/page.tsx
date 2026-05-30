@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -8,12 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AffirmationApi {
     id: number;
     affirmation: string;
     nbr_reponses: 2 | 4;
-    option_1?: string | null; 
+    option_1?: string | null;
     option_2?: string | null;
     option_3?: string | null;
     option_4?: string | null;
@@ -36,21 +37,22 @@ interface ReponseApiData {
 }
 
 type LocalResponse = {
-    reponseSelection: string; 
+    reponseSelection: string;
     pourquoi: string;
 };
 
-const qcmLabels: { [key: string]: string } = {
-    "1": "Toujours vrai",
-    "2": "Généralement vrai",
-    "3": "Généralement faux",
-    "4": "Toujours faux"
-};
+// Internal sentinel values kept in French to avoid logic breakage
+const VF_TRUE = "Vrai";
+const VF_FALSE = "Faux";
+const DONT_KNOW = "Je ne sais pas";
+const vraiFauxOptions = [VF_TRUE, VF_FALSE];
+const qcmValues = ["1", "2", "3", "4"];
 
-export default function Participer() {
+function Participer() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activityCode = searchParams.get('code');
+  const { t } = useLanguage();
 
   const [activite, setActivite] = useState<ActiviteApiData | null>(null);
   const [currentAffirmationIndex, setCurrentAffirmationIndex] = useState(0);
@@ -60,10 +62,14 @@ export default function Participer() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const vraiFauxOptions = ["Vrai", "Faux"];
-  const qcmValues = ["1", "2", "3", "4"];
+  const qcmLabels: { [key: string]: string } = {
+      "1": t('common.alwaysTrue'),
+      "2": t('common.generallyTrue'),
+      "3": t('common.generallyFalse'),
+      "4": t('common.alwaysFalse'),
+  };
 
-  const mapLocalToApiResponse = useCallback((localResp: LocalResponse, affirmation: AffirmationApi, activite: ActiviteApiData): Partial<ReponseApiData> => {
+  const mapLocalToApiResponse = useCallback((localResp: LocalResponse, affirmation: AffirmationApi, activiteData: ActiviteApiData): Partial<ReponseApiData> => {
       const apiPayload: Partial<ReponseApiData> = {
           justification: localResp.pourquoi || null,
           reponse_vf: null,
@@ -71,64 +77,48 @@ export default function Participer() {
       };
       const selection = localResp.reponseSelection;
 
-      // Utiliser affirmation.nbr_reponses pour déterminer comment stocker (validation backend)
-      // Mais convertir depuis l'interface utilisateur (activite.type_affirmation_requise)
-      
       if (affirmation.nbr_reponses === 2) {
-          // Backend attend une réponse Vrai/Faux
-          if (activite.type_affirmation_requise === 2) {
-              // Interface Vrai/Faux → mapping direct
-              if (selection === "Vrai") apiPayload.reponse_vf = true;
-              else if (selection === "Faux") apiPayload.reponse_vf = false;
-          } else if (activite.type_affirmation_requise === 4) {
-              // Interface 4 niveaux → convertir vers Vrai/Faux
+          if (activiteData.type_affirmation_requise === 2) {
+              if (selection === VF_TRUE) apiPayload.reponse_vf = true;
+              else if (selection === VF_FALSE) apiPayload.reponse_vf = false;
+          } else if (activiteData.type_affirmation_requise === 4) {
               const qcmValue = parseInt(selection, 10);
               if (qcmValue === 1 || qcmValue === 2) apiPayload.reponse_vf = true;
               else if (qcmValue === 3 || qcmValue === 4) apiPayload.reponse_vf = false;
           }
       } else if (affirmation.nbr_reponses === 4) {
-          // Backend attend une réponse QCM
-          if (activite.type_affirmation_requise === 4) {
-              // Interface 4 niveaux → mapping direct
+          if (activiteData.type_affirmation_requise === 4) {
               const qcmValue = parseInt(selection, 10);
               if (!isNaN(qcmValue) && qcmValue >= 1 && qcmValue <= 4) {
                   apiPayload.reponse_choisie_qcm = qcmValue;
               }
-          } else if (activite.type_affirmation_requise === 2) {
-              // Interface Vrai/Faux → convertir vers QCM
-              if (selection === "Vrai") apiPayload.reponse_choisie_qcm = 1;
-              else if (selection === "Faux") apiPayload.reponse_choisie_qcm = 4;
+          } else if (activiteData.type_affirmation_requise === 2) {
+              if (selection === VF_TRUE) apiPayload.reponse_choisie_qcm = 1;
+              else if (selection === VF_FALSE) apiPayload.reponse_choisie_qcm = 4;
           }
       }
       return apiPayload;
   }, []);
 
-  const mapApiToLocalResponse = (apiResp: ReponseApiData | undefined, affirmation: AffirmationApi, activite: ActiviteApiData): LocalResponse => {
-      let reponseSelection = "Je ne sais pas";
+  const mapApiToLocalResponse = (apiResp: ReponseApiData | undefined, affirmation: AffirmationApi, activiteData: ActiviteApiData): LocalResponse => {
+      let reponseSelection = DONT_KNOW;
       if (apiResp) {
-           // Reconvertir depuis le format stocké vers l'interface utilisateur
            if (affirmation.nbr_reponses === 2) {
-               // Données stockées en Vrai/Faux
-               if (activite.type_affirmation_requise === 2) {
-                   // Interface Vrai/Faux → mapping direct
-                   if (apiResp.reponse_vf === true) reponseSelection = "Vrai";
-                   else if (apiResp.reponse_vf === false) reponseSelection = "Faux";
-               } else if (activite.type_affirmation_requise === 4) {
-                   // Interface 4 niveaux → convertir depuis Vrai/Faux
-                   if (apiResp.reponse_vf === true) reponseSelection = "1"; // Toujours vrai
-                   else if (apiResp.reponse_vf === false) reponseSelection = "4"; // Toujours faux
+               if (activiteData.type_affirmation_requise === 2) {
+                   if (apiResp.reponse_vf === true) reponseSelection = VF_TRUE;
+                   else if (apiResp.reponse_vf === false) reponseSelection = VF_FALSE;
+               } else if (activiteData.type_affirmation_requise === 4) {
+                   if (apiResp.reponse_vf === true) reponseSelection = "1";
+                   else if (apiResp.reponse_vf === false) reponseSelection = "4";
                }
            } else if (affirmation.nbr_reponses === 4) {
-               // Données stockées en QCM
-               if (activite.type_affirmation_requise === 4) {
-                   // Interface 4 niveaux → mapping direct
+               if (activiteData.type_affirmation_requise === 4) {
                    if (apiResp.reponse_choisie_qcm !== null && apiResp.reponse_choisie_qcm >= 1 && apiResp.reponse_choisie_qcm <= 4) {
                        reponseSelection = String(apiResp.reponse_choisie_qcm);
                    }
-               } else if (activite.type_affirmation_requise === 2) {
-                   // Interface Vrai/Faux → convertir depuis QCM
-                   if (apiResp.reponse_choisie_qcm === 1 || apiResp.reponse_choisie_qcm === 2) reponseSelection = "Vrai";
-                   else if (apiResp.reponse_choisie_qcm === 3 || apiResp.reponse_choisie_qcm === 4) reponseSelection = "Faux";
+               } else if (activiteData.type_affirmation_requise === 2) {
+                   if (apiResp.reponse_choisie_qcm === 1 || apiResp.reponse_choisie_qcm === 2) reponseSelection = VF_TRUE;
+                   else if (apiResp.reponse_choisie_qcm === 3 || apiResp.reponse_choisie_qcm === 4) reponseSelection = VF_FALSE;
                }
            }
       }
@@ -140,7 +130,7 @@ export default function Participer() {
 
   useEffect(() => {
     if (!activityCode) {
-      setError("Code d'activité manquant dans l'URL.");
+      setError(t('activite.missingCode'));
       setLoading(false);
       return;
     }
@@ -149,7 +139,7 @@ export default function Participer() {
       setError(null);
       try {
         const activityResponse = await axios.get(`${API_BASE_URL}/api/activites/${activityCode}`, { withCredentials: true });
-        if (activityResponse.status !== 200 || !activityResponse.data) throw new Error("Impossible de charger l'activité.");
+        if (activityResponse.status !== 200 || !activityResponse.data) throw new Error(t('activite.cannotLoad'));
         const fetchedActivite: ActiviteApiData = activityResponse.data;
         setActivite(fetchedActivite);
 
@@ -175,18 +165,17 @@ export default function Participer() {
       } catch (err: unknown) {
         console.error("Error fetching initial data:", err);
          if (axios.isAxiosError(err) && err.response) {
-           if (err.response.status === 404) setError(`L'activité ou les réponses pour "${activityCode}" n'ont pas été trouvées.`);
+           if (err.response.status === 404) setError(t('confirmer.notFoundCode', { code: activityCode }));
            else if (err.response.status === 403) {
-               // Check if it's specifically about unpublished activity
                const errorMessage = err.response.data?.error || "";
                if (errorMessage.includes("pas encore publiée")) {
-                   setError("Cette activité n'est pas encore publiée. Veuillez contacter votre encadrant.");
+                   setError(t('participer.notPublishedError'));
                } else {
-                   setError("Accès refusé à cette activité/réponses.");
+                   setError(t('participer.accessDenied'));
                }
-           } else setError(err.response.data?.error || err.response.data?.detail || "Erreur lors du chargement des données.");
+           } else setError(err.response.data?.error || err.response.data?.detail || t('common.networkError'));
         } else {
-          setError("Erreur réseau ou serveur inaccessible.");
+          setError(t('common.networkError'));
         }
       } finally {
         setLoading(false);
@@ -215,7 +204,7 @@ export default function Participer() {
 
       const affirmation = activite.affirmations_associes[indexToSubmit];
       const localResponse = localResponses[indexToSubmit];
-      const effectiveLocalResponse = localResponse || { reponseSelection: 'Je ne sais pas', pourquoi: '' };
+      const effectiveLocalResponse = localResponse || { reponseSelection: DONT_KNOW, pourquoi: '' };
       const submitted = submittedResponses[indexToSubmit];
       const apiPayload = mapLocalToApiResponse(effectiveLocalResponse, affirmation, activite);
       const currentExistingId = submitted?.id;
@@ -226,7 +215,6 @@ export default function Participer() {
                          apiPayload.reponse_choisie_qcm !== submitted.reponse_choisie_qcm ||
                          apiPayload.justification !== submitted.justification;
       } else {
-          // Always save a response, even for "Je ne sais pas" to ensure we have a record
           needsApiCall = true;
       }
 
@@ -248,7 +236,7 @@ export default function Participer() {
           if (response.status === 201 || response.status === 200) {
               const savedData = response.data;
               setSubmittedResponses(prev => ({ ...prev, [indexToSubmit]: savedData }));
-              if (!localResponse || !localResponse.reponseSelection || localResponse.reponseSelection === 'Je ne sais pas') {
+              if (!localResponse || !localResponse.reponseSelection || localResponse.reponseSelection === DONT_KNOW) {
                   setLocalResponses(prev => ({
                       ...prev,
                       [indexToSubmit]: mapApiToLocalResponse(savedData, affirmation, activite)
@@ -256,20 +244,19 @@ export default function Participer() {
               }
               return { success: true, data: savedData };
           } else {
-              throw new Error(`Statut inattendu: ${response.status}`);
+              throw new Error(`Unexpected status: ${response.status}`);
           }
       } catch (err: unknown) {
           console.error(`Error submitting index ${indexToSubmit}:`, err);
            if (axios.isAxiosError(err) && err.response) {
-                let errorMsg = "Erreur inconnue.";
-                if (err.response.status === 409) errorMsg = "Conflit détecté lors de la sauvegarde.";
-                else if (err.response.status === 400) errorMsg = "Erreur de validation: " + JSON.stringify(err.response.data);
-                else if (err.response.status === 403) errorMsg = "Permission refusée.";
-                else if (err.response.status === 404) errorMsg = "Ressource non trouvée (API endpoint issue?).";
-                else errorMsg = err.response.data?.error || err.response.data?.detail || `Erreur serveur (${err.response.status}).`;
+                let errorMsg = t('common.networkError');
+                if (err.response.status === 409) errorMsg = "Conflict detected during save.";
+                else if (err.response.status === 400) errorMsg = "Validation error: " + JSON.stringify(err.response.data);
+                else if (err.response.status === 403) errorMsg = t('participer.accessDenied');
+                else errorMsg = err.response.data?.error || err.response.data?.detail || t('common.networkError');
                 setError(errorMsg);
            } else {
-               setError("Erreur réseau ou serveur inaccessible.");
+               setError(t('common.networkError'));
            }
           return { success: false, data: null };
       } finally {
@@ -291,23 +278,20 @@ export default function Participer() {
     setError(null);
   };
 
- const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async () => {
     if (!activite || !activityCode || isSubmitting) return;
     setError(null);
 
     const finalIndex = currentAffirmationIndex;
     const lastSubmissionResult = await submitCurrentResponse(finalIndex);
 
-    if (!lastSubmissionResult.success) {
-         return;
-    }
+    if (!lastSubmissionResult.success) return;
 
     let firstMissingIndex = -1;
     const currentSubmittedStateSnapshot = { ...submittedResponses, [finalIndex]: lastSubmissionResult.data };
 
     const allSubmitted = activite.affirmations_associes.every((affirmation, index) => {
         const responseData = currentSubmittedStateSnapshot[index];
-        // Consider a response submitted if it exists and has an ID (including 0)
         const submittedSuccessfully = responseData && (responseData.id !== undefined && responseData.id !== null);
         if (!submittedSuccessfully && firstMissingIndex === -1) {
             firstMissingIndex = index;
@@ -316,7 +300,7 @@ export default function Participer() {
     });
 
     if (!allSubmitted) {
-        alert(`Veuillez répondre à toutes les affirmations avant de terminer. Problème détecté autour de l'affirmation ${firstMissingIndex + 1}. Assurez-vous que chaque réponse a été enregistrée.`);
+        alert(t('participer.missingAnswersAlert', { n: firstMissingIndex + 1 }));
         if(firstMissingIndex !== -1 && firstMissingIndex !== currentAffirmationIndex) {
             setCurrentAffirmationIndex(firstMissingIndex);
         }
@@ -327,16 +311,15 @@ export default function Participer() {
     if(activityCode) {
         router.push(`/etudiant/activite/participer/confirmer?code=${encodeURIComponent(activityCode)}`);
     } else {
-        setError("Code activité perdu, impossible de confirmer.");
+        setError(t('participer.activityCodeLost'));
         setIsSubmitting(false);
     }
-};
+  };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen"><p className="text-xl">Chargement de l'activité...</p></div>;
+  if (loading) return <div className="flex justify-center items-center min-h-screen"><p className="text-xl">{t('participer.loading')}</p></div>;
   if (error && !activite) return <div className="flex justify-center items-center min-h-screen"><p className="text-red-600 text-xl p-4">{error}</p></div>;
-  if (!activite) return <div className="flex justify-center items-center min-h-screen"><p className="text-yellow-600 text-xl">Aucune donnée d'activité disponible.</p></div>;
-  
-  // Handle case where activity has no affirmations
+  if (!activite) return <div className="flex justify-center items-center min-h-screen"><p className="text-yellow-600 text-xl">{t('participer.noData')}</p></div>;
+
   if (!activite.affirmations_associes || activite.affirmations_associes.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -351,18 +334,17 @@ export default function Participer() {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-yellow-800 mb-2">
-                  Activité en cours de préparation
+                  {t('participer.noAffirmationsTitle')}
                 </h3>
                 <p className="text-yellow-700 text-lg">
-                  Cette activité ne contient aucune affirmation pour le moment. 
-                  Veuillez contacter votre encadrant pour plus d'informations.
+                  {t('participer.noAffirmationsDesc')}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => router.back()}
                 className="mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
-                Retour
+                {t('common.back')}
               </button>
             </div>
           </div>
@@ -370,13 +352,12 @@ export default function Participer() {
       </div>
     );
   }
-  
+
   if (currentAffirmationIndex >= activite.affirmations_associes.length || currentAffirmationIndex < 0) {
-       return <div className="flex justify-center items-center min-h-screen"><p className="text-red-600 text-xl">Erreur: Index d'affirmation invalide.</p></div>;
+       return <div className="flex justify-center items-center min-h-screen"><p className="text-red-600 text-xl">{t('participer.invalidIndex')}</p></div>;
   }
 
   const currentAffirmationData = activite.affirmations_associes[currentAffirmationIndex];
-  // Use the activity's type_affirmation_requise to determine which options to show to students
   const currentResponseOptions = activite.type_affirmation_requise === 2 ? vraiFauxOptions : qcmValues;
 
   return (
@@ -384,13 +365,9 @@ export default function Participer() {
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="font-medium text-gray-500 uppercase tracking-wider">
-               {/* Intentionally blank or Activity: {activite.code_activite} */}
-            </span>
+            <span className="font-medium text-gray-500 uppercase tracking-wider"></span>
             {activite.code_activite && <div className="hidden sm:block h-4 w-[2px] bg-gray-300"></div>}
-            <h2 className="text-3xl text-gray-900 font-bold">
-              {activite.titre}
-            </h2>
+            <h2 className="text-3xl text-gray-900 font-bold">{activite.titre}</h2>
           </div>
         </div>
         {error && <p className="text-red-600 text-base mb-4 text-center">{error}</p>}
@@ -417,19 +394,21 @@ export default function Participer() {
                       htmlFor={`${optionValue}-${currentAffirmationIndex}`}
                       className="whitespace-nowrap text-lg font-medium cursor-pointer"
                     >
-                      {activite.type_affirmation_requise === 4 ? qcmLabels[optionValue] : optionValue}
+                      {activite.type_affirmation_requise === 4
+                        ? qcmLabels[optionValue]
+                        : optionValue === VF_TRUE ? t('common.true') : t('common.false')}
                     </Label>
                   </div>
                 ))}
               </div>
               <div className="flex justify-center items-center border-t pt-4 mt-2">
                 <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 border border-gray-200">
-                  <RadioGroupItem value="Je ne sais pas" id={`unknown-${currentAffirmationIndex}`}/>
+                  <RadioGroupItem value={DONT_KNOW} id={`unknown-${currentAffirmationIndex}`}/>
                   <Label
                     htmlFor={`unknown-${currentAffirmationIndex}`}
                     className="whitespace-nowrap text-lg font-medium cursor-pointer"
                   >
-                    Je ne sais pas
+                    {t('common.dontKnow')}
                   </Label>
                 </div>
               </div>
@@ -437,10 +416,10 @@ export default function Participer() {
 
             <Textarea
               id={`explication-${currentAffirmationIndex}`}
-              placeholder="Expliquez votre réponse ..."
+              placeholder={t('participer.explainPlaceholder')}
               value={localResponses[currentAffirmationIndex]?.pourquoi || ""}
               onChange={(e) => handleLocalResponseChange(currentAffirmationIndex, "pourquoi", e.target.value)}
-              style={{ fontSize: '25px' }} 
+              style={{ fontSize: '25px' }}
               className="mt-6 w-full min-h-[120px] p-3 border border-gray-300 rounded-md"
               disabled={isSubmitting}
             />
@@ -448,7 +427,7 @@ export default function Participer() {
 
           <div className="text-center mb-4">
             <span className="text-lg font-medium text-gray-500">
-              Affirmation {currentAffirmationIndex + 1} sur {activite.affirmations_associes.length}
+              {t('participer.statementN', { n: currentAffirmationIndex + 1, total: activite.affirmations_associes.length })}
             </span>
              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2 max-w-md mx-auto">
                 <div
@@ -466,7 +445,7 @@ export default function Participer() {
               className="px-6 py-2"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Précédent
+              {t('common.previous')}
             </Button>
 
             {currentAffirmationIndex === activite.affirmations_associes.length - 1 ? (
@@ -475,7 +454,7 @@ export default function Participer() {
                 disabled={isSubmitting}
                 className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
               >
-                {isSubmitting ? "Enregistrement..." : "Terminer l'activité"}
+                {isSubmitting ? t('participer.finishing') : t('participer.finish')}
               </Button>
             ) : (
                <Button
@@ -484,7 +463,7 @@ export default function Participer() {
                 disabled={isSubmitting}
                 className="px-6 py-2"
               >
-                {isSubmitting ? "Enregistrement..." : "Suivant"}
+                {isSubmitting ? t('participer.finishing') : t('common.next')}
                 <ChevronRight className="h-4 w-4 ml-2" />
                </Button>
             )}
@@ -493,4 +472,8 @@ export default function Participer() {
       </div>
     </div>
   );
+}
+
+export default function ParticiperWrapper() {
+  return <Suspense><Participer /></Suspense>;
 }

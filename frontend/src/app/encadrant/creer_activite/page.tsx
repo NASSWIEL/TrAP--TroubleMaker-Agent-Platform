@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import axios from "axios"; // Import axios
+import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // 🔹 Define interface for Affirmation data from API
 interface Affirmation {
@@ -124,7 +125,8 @@ const usePersistedFormState = () => {
 };
 
 const GererActivites = () => {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
+  const { t } = useLanguage();
   const { formState, saveFormState, clearFormState } = usePersistedFormState();
   
   // Individual state variables for easier component logic
@@ -777,15 +779,15 @@ const GererActivites = () => {
           className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center space-x-2"
         >
           <span>←</span>
-          <span>Menu Principal</span>
+          <span>{t('creerActivite.mainMenu')}</span>
         </button>
-        
-        <h1 className="text-4xl font-bold text-gray-800">Créer une Activité</h1>
-        
+
+        <h1 className="text-4xl font-bold text-gray-800">{t('creerActivite.title')}</h1>
+
         {/* Form auto-save indicator */}
         <div className="flex items-center space-x-2">
           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-sm text-gray-600">Sauvegarde automatique</span>
+          <span className="text-sm text-gray-600">{t('creerActivite.autoSave')}</span>
         </div>
       </header>
 
@@ -793,13 +795,13 @@ const GererActivites = () => {
         {/* Display success message for restored data */}
         {showRestoredMessage && (
           <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong className="font-bold">Données restaurées !</strong>
-            <span className="block sm:inline"> Vos données précédentes ont été restaurées automatiquement.</span>
+            <strong className="font-bold">{t('creerActivite.dataRestored')}</strong>
+            <span className="block sm:inline"> {t('creerActivite.dataRestoredDesc')}</span>
             <button
               className="absolute top-0 bottom-0 right-0 px-4 py-3"
               onClick={() => setShowRestoredMessage(false)}
             >
-              <span className="sr-only">Fermer</span>
+              <span className="sr-only">{t('creerActivite.srClose')}</span>
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
               </svg>
@@ -810,7 +812,7 @@ const GererActivites = () => {
         {/* Display error message if any */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong className="font-bold">Erreur !</strong>
+            <strong className="font-bold">{t('creerActivite.errorTitle')}</strong>
             <span className="block sm:inline"> {error}</span>
           </div>
         )}
@@ -818,14 +820,14 @@ const GererActivites = () => {
         {/* First Row - Activity Details */}
         <div className="bg-white shadow-md p-4 md:p-6 rounded-lg">
           <header className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex justify-center">Détails de l'activité</h2>
+            <h2 className="text-2xl font-bold text-gray-800 flex justify-center">{t('activityForm.title')}</h2>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* First Column - Basic Information */}
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Type d'apprenant :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.learnerType')}</label>
                 <div className="flex space-x-4">
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -836,7 +838,7 @@ const GererActivites = () => {
                       onChange={(e) => updateLearnerType(e.target.value)}
                       className="w-4 h-4"
                     />
-                    <span>Interne</span>
+                    <span>{t('activityForm.internal')}</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -847,17 +849,17 @@ const GererActivites = () => {
                       onChange={(e) => updateLearnerType(e.target.value)}
                       className="w-4 h-4"
                     />
-                    <span>Externe</span>
+                    <span>{t('activityForm.external')}</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Formation concernée :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.formation')}</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Tapez pour rechercher ou créer une formation..."
+                    placeholder={t('activityForm.formationPlaceholder')}
                     className="w-full px-4 py-2 text-base md:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formationInput}
                     onChange={(e) => updateFormationInput(e.target.value)}
@@ -886,19 +888,19 @@ const GererActivites = () => {
                   {/* Status indicator */}
                   <div className="mt-1 text-sm">
                     {selectedCategoryId ? (
-                      <span className="text-green-600">✓ Formation existante sélectionnée</span>
+                      <span className="text-green-600">{t('activityForm.existingFormation')}</span>
                     ) : formationInput.trim() ? (
-                      <span className="text-blue-600">💡 Nouvelle formation sera créée</span>
+                      <span className="text-blue-600">{t('activityForm.newFormation')}</span>
                     ) : null}
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Titre de l'activité :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityTitle')}</label>
                 <input
                   type="text"
-                  placeholder="Entrez le titre de l'activité"
+                  placeholder={t('activityForm.activityTitlePlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={activityTitle}
                   onChange={(e) => updateActivityTitle(e.target.value)}
@@ -907,13 +909,13 @@ const GererActivites = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2 text-lg">
-                  Code de l'activité :
-                  <span className="text-sm text-gray-500 font-normal ml-2">(max 8 caractères, A-Z et 0-9 seulement)</span>
+                  {t('activityForm.activityCode')}
+                  <span className="text-sm text-gray-500 font-normal ml-2">{t('activityForm.activityCodeNote')}</span>
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Ex: MED01ABC"
+                    placeholder={t('activityForm.activityCodePlaceholder')}
                     className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider"
                     value={activityCode}
                     onChange={(e) => updateActivityCode(e.target.value)}
@@ -924,10 +926,10 @@ const GererActivites = () => {
                   </div>
                 </div>
                 {activityCode.length === 8 && (
-                  <p className="text-sm text-orange-600 mt-1">✓ Limite de caractères atteinte</p>
+                  <p className="text-sm text-orange-600 mt-1">{t('activityForm.charLimitReached')}</p>
                 )}
                 {activityCode.length > 0 && activityCode.length < 3 && (
-                  <p className="text-sm text-blue-600 mt-1">💡 Conseil: Utilisez 3-5 caractères pour un code plus facilement mémorisable</p>
+                  <p className="text-sm text-blue-600 mt-1">{t('activityForm.codeHint')}</p>
                 )}
               </div>
             </div>
@@ -935,10 +937,10 @@ const GererActivites = () => {
             {/* Second Column - Activity Configuration */}
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Degré de véracité :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.veracityDegree')}</label>
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
                   <p className="text-sm text-blue-700">
-                    <strong>Note :</strong> Ce paramètre détermine comment les étudiants répondront, mais les affirmations restent toujours soit vraies soit fausses.
+                    <strong>{t('activityForm.noteLabel')}</strong> {t('activityForm.veracityNote')}
                   </p>
                 </div>
                 <div className="flex flex-col space-y-2">
@@ -951,7 +953,7 @@ const GererActivites = () => {
                       onChange={() => updateResponseCount(2)}
                       className="w-4 h-4"
                     />
-                    <span>Binaire (Vrai / Faux) - Les étudiants répondent par Vrai ou Faux</span>
+                    <span>{t('activityForm.binary')}</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -962,13 +964,13 @@ const GererActivites = () => {
                       onChange={() => updateResponseCount(4)}
                       className="w-4 h-4"
                     />
-                    <span>Gradué (4 niveaux) - Les étudiants choisissent leur degré de certitude</span>
+                    <span>{t('activityForm.graduated')}</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Type de feedback :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.feedbackType')}</label>
                 <div className="flex flex-col space-y-2">
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -979,7 +981,7 @@ const GererActivites = () => {
                       onChange={() => updateIsDebriefAuto(false)}
                       className="w-4 h-4"
                     />
-                    <span>Manuel</span>
+                    <span>{t('activityForm.manual')}</span>
                   </label>
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -990,15 +992,15 @@ const GererActivites = () => {
                       onChange={() => updateIsDebriefAuto(true)}
                       className="w-4 h-4"
                     />
-                    <span>Automatique</span>
+                    <span>{t('activityForm.automatic')}</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Liste d'emails autorisés :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.allowedEmails')}</label>
                 <textarea
-                  placeholder="Entrez une liste d'emails séparés par des virgules"
+                  placeholder={t('activityForm.emailsPlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                   value={emailList}
@@ -1010,9 +1012,9 @@ const GererActivites = () => {
             {/* Third Column - Descriptions */}
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Présentation publique :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.publicPresentation')}</label>
                 <textarea
-                  placeholder="Entrez la présentation publique visible par les étudiants"
+                  placeholder={t('activityForm.presentationPlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={4}
                   value={publicPresentation}
@@ -1021,9 +1023,9 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">Description (encadrant) :</label>
+                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.supervisorDescription')}</label>
                 <textarea
-                  placeholder="Entrez la description interne visible par l'encadrant"
+                  placeholder={t('activityForm.supervisorDescPlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={4}
                   value={description}
@@ -1044,7 +1046,7 @@ const GererActivites = () => {
           >
             <h2 className="text-3xl font-bold mb-6 flex justify-center">Affirmations sélectionnées ({selectedAffirmations.length})</h2>
             {selectedAffirmations.length === 0 && (
-              <p className="text-gray-500 text-center mt-10">Glissez des affirmations ici.</p>
+              <p className="text-gray-500 text-center mt-10">{t('activityForm.dragHere')}</p>
             )}
             <ul className="space-y-2">
               {selectedAffirmations.map((affirmation) => (
@@ -1061,27 +1063,27 @@ const GererActivites = () => {
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         rows={3}
-                        placeholder="Texte de l'affirmation..."
+                        placeholder={t('activityForm.affirmationText')}
                       />
                       <textarea
                         className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 text-lg"
                         value={editExplication}
                         onChange={(e) => setEditExplication(e.target.value)}
                         rows={2}
-                        placeholder="Explication (optionnelle)..."
+                        placeholder={t('activityForm.explanationOptional')}
                       />
                       <div className="flex justify-end gap-3">
                         <button
                           onClick={() => saveAffirmationChanges(affirmation.id)}
                           className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center gap-2 text-lg"
                         >
-                          <Check size={18} /> Sauvegarder
+                          <Check size={18} /> {t('common.save')}
                         </button>
                         <button
                           onClick={cancelEditingAffirmation}
                           className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 flex items-center gap-2 text-lg"
                         >
-                          <X size={18} /> Annuler
+                          <X size={18} /> {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1118,9 +1120,9 @@ const GererActivites = () => {
                         <button
                           onClick={() => startEditingAffirmation(affirmation)}
                           className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-2 text-lg"
-                          title="Modifier l'affirmation"
+                          title={t('activityForm.editAffirmation')}
                         >
-                          <Edit2 size={16} /> Modifier
+                          <Edit2 size={16} /> {t('common.edit')}
                         </button>
                         <button
                           onClick={() => toggleAffirmationTruth(affirmation.id, affirmation)}
@@ -1134,9 +1136,9 @@ const GererActivites = () => {
                         <button
                           onClick={() => deleteAffirmation(affirmation.id)}
                           className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2 text-lg"
-                          title="Supprimer l'affirmation"
+                          title={t('activityForm.deleteAffirmation')}
                         >
-                          <Trash2 size={16} /> Suppr.
+                          <Trash2 size={16} /> {t('common.delete')}
                         </button>
                       </div>
                     </>
@@ -1153,14 +1155,14 @@ const GererActivites = () => {
             onDrop={(event) => handleDrop(event, "database")}
           >
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
-              <h2 className="text-3xl font-bold">Base de données d'affirmations</h2>
+              <h2 className="text-3xl font-bold">{t('activityForm.dbTitle')}</h2>
               <button
                 className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 flex items-center gap-2"
                 onClick={navigateToGeneratePage}
-                title="Générer des affirmations pour le code activité saisi"
+                title={t('activityForm.generateTooltip')}
               >
                 <Plus size={20} />
-                <span>Générer</span>
+                <span>{t('activityForm.generate')}</span>
               </button>
             </div>
 
@@ -1168,7 +1170,7 @@ const GererActivites = () => {
               <input
                 type="text"
                 className="w-full p-4 border rounded text-base md:text-xl"
-                placeholder="Rechercher une affirmation"
+                placeholder={t('activityForm.searchAffirmation')}
                 value={searchQuery}
                 onChange={(e) => updateSearchQuery(e.target.value)}
               />
@@ -1176,11 +1178,11 @@ const GererActivites = () => {
 
             <div className="h-[400px] overflow-y-auto">
               {loadingAffirmations ? (
-                <p className="text-gray-500 text-center">Chargement des affirmations...</p>
+                <p className="text-gray-500 text-center">{t('activityForm.loadingAffirmations')}</p>
               ) : filteredDbAffirmations.length === 0 && !searchQuery ? (
-                <p className="text-gray-500 text-center">Aucune affirmation disponible dans la base de données.</p>
+                <p className="text-gray-500 text-center">{t('activityForm.noAffirmationsDB')}</p>
               ) : filteredDbAffirmations.length === 0 && searchQuery ? (
-                <p className="text-gray-500 text-center">Aucune affirmation ne correspond à votre recherche.</p>
+                <p className="text-gray-500 text-center">{t('activityForm.noAffirmationsSearch')}</p>
               ) : (
                 <ul className="space-y-2">
                   {/* Use filteredDbAffirmations which is already sorted and filtered */}
@@ -1198,14 +1200,14 @@ const GererActivites = () => {
                             value={editText}
                             onChange={(e) => setEditText(e.target.value)}
                             rows={3}
-                            placeholder="Texte de l'affirmation..."
+                            placeholder={t('activityForm.affirmationText')}
                           />
                           <textarea
                             className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 text-lg"
                             value={editExplication}
                             onChange={(e) => setEditExplication(e.target.value)}
                             rows={2}
-                            placeholder="Explication (optionnelle)..."
+                            placeholder={t('activityForm.explanationOptional')}
                           />
                           <div className="flex justify-end gap-3">
                             <button
@@ -1289,7 +1291,7 @@ const GererActivites = () => {
         {/* Display error message */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong className="font-bold">Erreur !</strong>
+            <strong className="font-bold">{t('creerActivite.errorTitle')}</strong>
             <span className="block sm:inline"> {error}</span>
           </div>
         )}
@@ -1318,7 +1320,7 @@ const GererActivites = () => {
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+            {isSubmitting ? t('common.saving') : t('creerActivite.submit')}
           </button>
         </div>
       </div>

@@ -1,14 +1,12 @@
-'use client'; // Directive pour Next.js
+'use client';
 
-import React, { useState, useEffect } from "react"; // 🔹 Import useEffect
-import { useRouter } from "next/navigation"; // 🔹 Import de useRouter
-import axios from "axios"; // 🔹 Import axios
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import Account from "@/components/ui/Account";
-import { Settings, Plus, SpellCheck, RefreshCw, MessageSquare, User, LogOut } from "lucide-react";
+import { RefreshCw, MessageSquare, Settings, Plus, User, LogOut } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-// 🔹 Define interface for Activity data from API
 interface Activity {
   code_activite: string;
   titre: string;
@@ -46,140 +44,98 @@ interface Activity {
 
 const App = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter(); // 🔹 Initialisation du router
+  const router = useRouter();
+  const { t } = useLanguage();
 
-  // 🔹 State for activities, loading, and error
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-
-  // 🔹 State for user information
-  const [userEmail, setUserEmail] = useState<string>("user@example.com"); // Default email
-
-  // 🔹 State for expanded descriptions (adjust based on fetched data)
+  const [userEmail, setUserEmail] = useState<string>("user@example.com");
   const [expandedDescriptions, setExpandedDescriptions] = useState<boolean[]>([]);
 
-  // 🔹 Logout function
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/logout`, {}, {
-        withCredentials: true,
-      });
-      // Redirect to home page
+      await axios.post(`${API_BASE_URL}/api/logout`, {}, { withCredentials: true });
       router.push('/');
     } catch (err) {
       console.error("Logout error:", err);
-      // Even if logout fails, redirect to home
       router.push('/');
     }
   };
 
-  // 🔹 Fetch activities from API
   const fetchActivities = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/activites`, {
-        withCredentials: true, // Important for authentication
-      });
+      const response = await axios.get(`${API_BASE_URL}/api/activites`, { withCredentials: true });
       if (response.status === 200 && Array.isArray(response.data)) {
         setActivities(response.data);
-        // Try to get user email from the first activity's encadrant info
         if (response.data.length > 0 && response.data[0].encadrant?.email) {
           setUserEmail(response.data[0].encadrant.email);
         }
-        // Initialize expandedDescriptions based on fetched data
         setExpandedDescriptions(Array(response.data.length).fill(false));
-        setLastRefresh(new Date()); // Set last refresh time
+        setLastRefresh(new Date());
       } else {
-        setError("Erreur lors de la récupération des activités.");
-        setActivities([]); // Clear activities on error
+        setError(t('listeActivite.fetchError'));
+        setActivities([]);
         setExpandedDescriptions([]);
       }
     } catch (err: unknown) {
       console.error("Error fetching activities:", err);
       if (axios.isAxiosError(err) && err.response) {
         if (err.response.status === 403) {
-          setError("Accès non autorisé. Veuillez vous reconnecter.");
-          // Optionally redirect to login
-          // router.push("/encadrant/login");
+          setError(t('listeActivite.unauthorized'));
         } else {
-          setError(err.response.data?.detail || "Erreur serveur lors de la récupération des activités.");
+          setError(err.response.data?.detail || t('listeActivite.serverError'));
         }
       } else {
-        setError("Erreur réseau ou serveur inaccessible.");
+        setError(t('common.networkError'));
       }
-      setActivities([]); // Clear activities on error
+      setActivities([]);
       setExpandedDescriptions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Fetch activities on component mount and when page becomes visible
   useEffect(() => {
     fetchActivities();
-  }, [router]); // Dependency array includes router if used for redirection
+  }, [router]);
 
-  // 🔹 Refresh data when page becomes visible (user returns to tab/window)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Page became visible, refresh the data
-        fetchActivities();
-      }
+      if (!document.hidden) fetchActivities();
     };
-
-    const handleFocus = () => {
-      // Window/tab gained focus, refresh the data
-      fetchActivities();
-    };
-
-    // Add event listeners
+    const handleFocus = () => fetchActivities();
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
-
-    // Cleanup event listeners on component unmount
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []); // Empty dependency array since we want this to run once
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value.toLowerCase());
-  };
-
-  const handleCreateClick = () => {
-    router.push('/encadrant/creer_activite'); // 🔹 Redirection
-  };
-
-  const handleModifieClick = (activityCode: string) => {
-    router.push(`/encadrant/parametres_activite?code=${encodeURIComponent(activityCode)}`); // 🔹 Redirection with code
-  };
-
-  const handleDebriefClick = (activityCode: string) => {
-    router.push(`/encadrant/debrief?activity_code=${encodeURIComponent(activityCode)}`); // 🔹 Redirection to debrief page
   };
 
   const filteredActivities = activities.filter((activity) =>
     activity.titre.toLowerCase().includes(searchQuery)
   );
 
-  const toggleDescription = (index: number) => { // Use index
+  const toggleDescription = (index: number) => {
     setExpandedDescriptions((prev) => {
-      const newExpandedDescriptions = [...prev];
-      newExpandedDescriptions[index] = !newExpandedDescriptions[index];
-      return newExpandedDescriptions;
+      const next = [...prev];
+      next[index] = !next[index];
+      return next;
     });
   };
 
-  // 🔹 Handle loading and error states
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Chargement des activités...
+        {t('listeActivite.loading')}
       </div>
     );
   }
@@ -187,7 +143,7 @@ const App = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
-        Erreur: {error}
+        {t('listeActivite.errorLabel')} {error}
       </div>
     );
   }
@@ -197,48 +153,41 @@ const App = () => {
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800">Liste des activités</h1>
+            <h1 className="text-4xl font-bold text-gray-800">{t('listeActivite.title')}</h1>
             {lastRefresh && (
               <p className="text-sm text-gray-500 mt-1">
-                Dernière actualisation: {lastRefresh.toLocaleTimeString('fr-FR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit', 
-                  second: '2-digit' 
+                {t('listeActivite.lastRefresh')} {lastRefresh.toLocaleTimeString(undefined, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
                 })}
               </p>
             )}
           </div>
-          
-          {/* User info and logout section */}
+
           <div className="flex items-center space-x-4">
-            {/* Avatar */}
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
               <User className="h-6 w-6 text-white" />
             </div>
-            
-            {/* User email */}
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">{userEmail}</span>
-              <span className="text-xs text-gray-500">Encadrant</span>
+              <span className="text-xs text-gray-500">{t('listeActivite.supervisor')}</span>
             </div>
-            
-            {/* Logout button */}
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              title="Se déconnecter"
+              title={t('listeActivite.logout')}
             >
               <LogOut className="h-4 w-4" />
-              <span className="text-sm font-medium">Déconnexion</span>
+              <span className="text-sm font-medium">{t('listeActivite.loggingOut')}</span>
             </button>
           </div>
         </header>
 
-        {/* Centre le champ de recherche */}
         <div className="mb-8 flex justify-center items-center space-x-4">
           <input
             type="text"
-            placeholder="Recherche activité"
+            placeholder={t('listeActivite.search')}
             value={searchQuery}
             onChange={handleSearch}
             className="w-full max-w-md px-4 py-3 text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -247,45 +196,35 @@ const App = () => {
             onClick={fetchActivities}
             disabled={loading}
             className="bg-green-500 text-white px-4 py-3 rounded-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            title="Actualiser la liste"
+            title={t('listeActivite.refresh')}
           >
             <RefreshCw size={32} className={loading ? "animate-spin" : ""} />
           </button>
           <button
-            onClick={handleCreateClick}
+            onClick={() => router.push('/encadrant/creer_activite')}
             className="bg-blue-500 text-white px-4 py-3 rounded-md hover:bg-blue-600"
+            title={t('listeActivite.newActivity')}
           >
             <Plus size={32} />
           </button>
         </div>
 
         <div className="space-y-8">
-          {/* 🔹 Handle loading state */}
-          {loading && <p className="text-center text-xl text-gray-500">Chargement des activités...</p>}
-          {/* 🔹 Handle error state */}
-          {error && <p className="text-center text-xl text-red-500">Erreur: {error}</p>}
-          {/* 🔹 Handle empty list */}
+          {error && <p className="text-center text-xl text-red-500">{t('listeActivite.errorLabel')} {error}</p>}
           {!loading && !error && filteredActivities.length === 0 && (
             <p className="text-center text-xl text-gray-500">
-              {searchQuery ? "Aucune activité trouvée pour votre recherche." : "Vous n'avez pas encore créé d'activité."}
+              {searchQuery ? t('listeActivite.noResults') : t('listeActivite.noActivities')}
             </p>
           )}
-          {/* 🔹 Map over filteredActivities */}
           {!loading && !error && filteredActivities.map((activity, index) => (
             <div
-              key={activity.code_activite} // 🔹 Use unique code_activite as key
+              key={activity.code_activite}
               className="bg-gray-50 p-8 rounded-lg shadow-sm flex items-start space-x-6"
             >
-              {/* Section du statut */}
               <div className="flex flex-col items-center space-y-4 mt-2">
-                <span
-                  className={`text-xl font-semibold space-y-4 ${activity.is_published ? "text-green-600" : "text-red-600"
-                    }`}
-                >
-                  {activity.is_published ? "Publié" : "Brouillon"}
+                <span className={`text-xl font-semibold space-y-4 ${activity.is_published ? "text-green-600" : "text-red-600"}`}>
+                  {activity.is_published ? t('common.published') : t('common.draft')}
                 </span>
-
-                {/* Show activity type indicator */}
                 <div className="relative group">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-sm font-bold text-blue-600">
@@ -298,62 +237,57 @@ const App = () => {
                 </div>
               </div>
 
-              {/* Section du contenu */}
               <div className="flex-1">
-                <h2 className="font-bold text-3xl text-gray-800 mb-4">
-                  {activity.titre} {/* Use titre from API */}
-                </h2>
+                <h2 className="font-bold text-3xl text-gray-800 mb-4">{activity.titre}</h2>
                 <div className="font-semibold text-blue-600 mb-6 text-xl">
-                  Code : {activity.code_activite}
+                  {t('listeActivite.code')} {activity.code_activite}
                   {activity.destine_a && (
                     <span className="text-gray-500"> ({activity.destine_a.nom})</span>
                   )}
                   {!activity.destine_a && (
-                    <span className="text-gray-500"> (Aucune catégorie)</span>
+                    <span className="text-gray-500"> ({t('common.noCategory')})</span>
                   )}
                 </div>
 
                 <p className="text-gray-600 mb-6 text-xl">
                   {expandedDescriptions[index]
                     ? activity.description
-                    : activity.description.slice(0, 100) +
-                    (activity.description.length > 100 ? "..." : "")}
+                    : activity.description.slice(0, 100) + (activity.description.length > 100 ? "..." : "")}
                 </p>
                 {activity.description.length > 100 && (
                   <button
-                    onClick={() => toggleDescription(index)} // Use index
+                    onClick={() => toggleDescription(index)}
                     className="text-blue-500 hover:text-blue-700 text-xl"
                   >
-                    {expandedDescriptions[index] ? "Voir moins" : "Voir plus"}
+                    {expandedDescriptions[index] ? t('common.showLess') : t('common.showMore')}
                   </button>
                 )}
                 <p className="text-gray-500 mt-4 text-xl">
-                  Nombre d'affirmations : <span className="font-bold">{activity.nbr_affirmations_associe}</span>
+                  {t('listeActivite.affirmationCount')} <span className="font-bold">{activity.nbr_affirmations_associe}</span>
                   <br />
-                  Étudiants autorisés : <span className="font-bold">{activity.etudiants_autorises.length}</span>
+                  {t('listeActivite.authorizedStudents')} <span className="font-bold">{activity.etudiants_autorises.length}</span>
                 </p>
               </div>
 
-              {/* Section des boutons d'action à droite */}
               <div className="flex items-center space-x-2">
                 <div className="relative group">
                   <button
-                    onClick={() => handleDebriefClick(activity.code_activite)}
+                    onClick={() => router.push(`/encadrant/debrief?activity_code=${encodeURIComponent(activity.code_activite)}`)}
                     className="flex items-center justify-center h-12 w-12 bg-transparent rounded-full hover:bg-blue-100">
                     <MessageSquare className="h-7 w-7 text-blue-600" />
                   </button>
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-3 py-1 bg-gray-800 text-white text-base rounded shadow group-hover:block">
-                    Débrief
+                    {t('listeActivite.debrief')}
                   </div>
                 </div>
                 <div className="relative group">
                   <button
-                    onClick={() => handleModifieClick(activity.code_activite)} // Pass activity code
+                    onClick={() => router.push(`/encadrant/parametres_activite?code=${encodeURIComponent(activity.code_activite)}`)}
                     className="flex items-center justify-center h-12 w-12 bg-transparent rounded-full hover:bg-gray-200">
                     <Settings className="h-7 w-7 text-gray-700" />
                   </button>
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-3 py-1 bg-gray-800 text-white text-base rounded shadow group-hover:block">
-                    Paramètres
+                    {t('listeActivite.settings')}
                   </div>
                 </div>
               </div>

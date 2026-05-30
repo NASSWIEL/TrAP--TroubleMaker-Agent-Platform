@@ -1,10 +1,11 @@
-"use client"; // Directive pour Next.js
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Account from "@/components/ui/Account";
 import { Trash, Edit, Plus } from "lucide-react";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Affirmation {
   id: number;
@@ -13,6 +14,7 @@ interface Affirmation {
 
 const App = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
 
@@ -31,7 +33,7 @@ const App = () => {
   );
 
   const handleDeleteAffirmation = (id: number) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette affirmation ?")) {
+    if (window.confirm(t('listeAffirmations.deleteConfirm'))) {
       api.delete(`/api/affirmations/${id}`)
         .then(() => setAffirmations((prev) => prev.filter((a) => a.id !== id)))
         .catch(console.error);
@@ -51,7 +53,7 @@ const App = () => {
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Liste des affirmations</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{t('listeAffirmations.title')}</h1>
           </div>
           <Account
             name="Jean Dupont"
@@ -60,11 +62,10 @@ const App = () => {
           />
         </header>
 
-        {/* Centre le champ de recherche */}
         <div className="mb-8 flex justify-center items-center space-x-4">
           <input
             type="text"
-            placeholder="Recherche affirmation"
+            placeholder={t('listeAffirmations.search')}
             value={searchQuery}
             onChange={handleSearch}
             className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -80,7 +81,6 @@ const App = () => {
               key={affirmation.id}
               className="bg-gray-50 p-6 rounded-lg shadow-sm flex items-start space-x-4"
             >
-              {/* Section de la poubelle à gauche */}
               <div className="flex items-center">
                 <button
                   onClick={() => handleDeleteAffirmation(affirmation.id)}
@@ -90,12 +90,10 @@ const App = () => {
                 </button>
               </div>
 
-              {/* Section du contenu */}
               <div className="flex-1">
                 <p className="text-gray-800">{affirmation.affirmation}</p>
               </div>
 
-              {/* Section du stylo à droite */}
               <div className="flex items-center">
                 <button
                   onClick={() => handleEditAffirmation(affirmation.id)}

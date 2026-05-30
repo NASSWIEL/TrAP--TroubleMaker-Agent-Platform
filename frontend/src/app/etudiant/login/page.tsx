@@ -6,9 +6,12 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { CSSProperties } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const EtudiantLogin = () => {
     const router = useRouter();
+    const { t } = useLanguage();
     const [email, setEmail] = useState("");
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
@@ -19,7 +22,7 @@ const EtudiantLogin = () => {
         setError("");
 
         if (!email || !code) {
-            setError("Veuillez remplir tous les champs.");
+            setError(t('common.fillAllFields'));
             return;
         }
 
@@ -34,20 +37,18 @@ const EtudiantLogin = () => {
             });
 
             if (response.status === 200 && response.data) {
-                console.log("Login successful:", response.data);
-                // Redirect to activity presentation page instead of directly to participation
                 router.push(`/etudiant/activite?code=${encodeURIComponent(code)}`);
             } else {
-                setError("Réponse invalide du serveur.");
+                setError(t('common.serverInvalidResponse'));
             }
 
         } catch (err: unknown) {
             console.error("Login error:", err);
             if (axios.isAxiosError(err) && err.response) {
-                const backendError = err.response.data?.error || "Une erreur inconnue s'est produite.";
+                const backendError = err.response.data?.error || t('etudiantLogin.unknownError');
                 setError(backendError);
             } else {
-                setError("Impossible de contacter le serveur. Vérifiez votre connexion.");
+                setError(t('common.serverUnreachable'));
             }
         } finally {
             setLoading(false);
@@ -56,6 +57,7 @@ const EtudiantLogin = () => {
 
     return (
         <div style={styles.container}>
+            <LanguageSwitcher style={styles.langSwitcher} />
             <div style={styles.formContainer}>
                 <Image
                     src="/logo_LEMANS_UNIVERSITE-WEB.svg"
@@ -64,12 +66,12 @@ const EtudiantLogin = () => {
                     height={53}
                     style={styles.logo}
                 />
-                <h1 style={styles.title}>Connexion Étudiant</h1>
+                <h1 style={styles.title}>{t('etudiantLogin.title')}</h1>
                 <form onSubmit={handleSubmit}>
                     {error && <p style={styles.error}>{error}</p>}
                     <div style={styles.formGroup}>
                         <label htmlFor="email" style={styles.label}>
-                            Email :
+                            {t('etudiantLogin.email')}
                         </label>
                         <br />
                         <input
@@ -84,7 +86,7 @@ const EtudiantLogin = () => {
                     </div>
                     <div style={styles.formGroup}>
                         <label htmlFor="code" style={styles.label}>
-                            Code Activité :
+                            {t('etudiantLogin.activityCode')}
                         </label>
                         <br />
                         <input
@@ -98,15 +100,13 @@ const EtudiantLogin = () => {
                         />
                     </div>
 
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                        }}
-                    >
-                        <button type="submit" style={loading ? { ...styles.button, ...styles['button:disabled'] } : styles.button} disabled={loading}>
-                            {loading ? "Connexion..." : "Participer"}
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <button
+                            type="submit"
+                            style={loading ? { ...styles.button, ...styles['button:disabled'] } : styles.button}
+                            disabled={loading}
+                        >
+                            {loading ? t('etudiantLogin.joining') : t('etudiantLogin.join')}
                         </button>
                     </div>
                 </form>
@@ -115,7 +115,6 @@ const EtudiantLogin = () => {
     );
 };
 
-// --- Styles ---
 const styles: { [key: string]: CSSProperties } = {
     container: {
         display: "flex",
@@ -124,6 +123,12 @@ const styles: { [key: string]: CSSProperties } = {
         height: "100vh",
         backgroundColor: "#f8f8f8",
         flexDirection: "column",
+        position: "relative",
+    },
+    langSwitcher: {
+        position: "fixed",
+        top: "16px",
+        right: "16px",
     },
     formContainer: {
         padding: "25px 75px",
@@ -156,7 +161,7 @@ const styles: { [key: string]: CSSProperties } = {
         color: "#333",
     },
     input: {
-        width: "300px", // Reduced width
+        width: "300px",
         padding: "8px 12px",
         margin: "5px 0",
         border: "1px solid #ccc",
@@ -182,7 +187,7 @@ const styles: { [key: string]: CSSProperties } = {
     },
     error: {
         textAlign: "center",
-        marginBottom: "15px", // Added margin bottom
+        marginBottom: "15px",
         color: "red",
         fontSize: "14px",
     },
