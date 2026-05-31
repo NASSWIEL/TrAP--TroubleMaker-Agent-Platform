@@ -62,8 +62,8 @@ export default {
         }
       },
       fontFamily: {
-        inter: ['Inter', 'sans-serif'],
-        lora: ['Lora', 'serif'],
+        inter: ['var(--font-inter)', 'sans-serif'],
+        lora: ['var(--font-lora)', 'serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
