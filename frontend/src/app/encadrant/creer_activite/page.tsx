@@ -1186,8 +1186,7 @@ const GererActivites = () => {
                   {filteredDbAffirmations.map((affirmation) => (
                     <li
                       key={`db-${affirmation.id}`}
-                      className={`p-4 rounded shadow-sm text-base md:text-xl flex flex-col gap-3
-                        ${affirmation.is_correct_vf ? 'bg-green-50' : 'bg-red-50'}`}
+                      className={`bg-white rounded-lg border border-stone-200 p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3 ${affirmation.is_correct_vf ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-red-400'}`}
                     >
                       {editingAffirmation === affirmation.id ? (
                         // Mode édition
