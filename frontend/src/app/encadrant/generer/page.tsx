@@ -272,7 +272,7 @@ function GenerateAffirmationPage() {
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" className="text-lg" onClick={() => setEditingId(null)}>{t('common.cancel')}</Button>
-                    <Button onClick={() => handleSaveEdit(affirmation.id)} className="bg-blue-500 hover:bg-blue-600 text-white text-lg">{t('generer.saveEdit')}</Button>
+                    <Button onClick={() => handleSaveEdit(affirmation.id)} className="bg-navy-700 hover:bg-navy-900 text-white text-lg">{t('generer.saveEdit')}</Button>
                   </div>
                 </div>
               ) : (
@@ -358,13 +358,13 @@ function GenerateAffirmationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8 text-lg">
-      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-xl p-6 md:p-8">
+    <div className="min-h-screen bg-stone-100 p-4 md:p-8 text-lg">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="mb-8">
           <Button onClick={() => router.back()} variant="outline" size="sm" className="mb-4">
              <ArrowLeft className="mr-2 h-4 w-4"/> {t('generer.backToActivity')}
           </Button>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">{t('generer.title')}</h1>
+          <h1 className="font-lora text-2xl font-bold text-navy-900">{t('generer.title')}</h1>
           <p className="text-gray-600 mt-2 text-base md:text-lg">
             {t('generer.generateFor')} <code className="font-mono bg-gray-200 px-1 rounded">{activityCode}</code>.
           </p>
@@ -387,7 +387,7 @@ function GenerateAffirmationPage() {
             <div className="flex items-center justify-end gap-4">
               <Button
                 onClick={handleGenerate}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-base md:text-lg px-6 py-3 w-full sm:w-auto"
+                className="bg-navy-700 hover:bg-navy-900 text-white text-base md:text-lg px-6 py-3 w-full sm:w-auto"
                 disabled={isGenerating || !question.trim() || !activityCode}
               >
                 {isGenerating && !reloadingId
