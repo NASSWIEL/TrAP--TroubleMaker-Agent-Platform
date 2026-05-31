@@ -131,8 +131,8 @@ function Confirmer() {
 
   if (loading) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-            <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <div className="min-h-screen bg-stone-100 p-8">
+            <div className="max-w-2xl mx-auto px-6 py-8">
                 <Skeleton className="h-8 w-3/4 mb-2" />
                 <Skeleton className="h-6 w-1/2 mb-8" />
                 <div className="space-y-6">
@@ -155,7 +155,7 @@ function Confirmer() {
 
   if (error) {
      return (
-         <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+         <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center p-4 text-center">
              <p className="text-red-600 text-xl">{error}</p>
              <Button onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} className="mt-4">
                 {t('confirmer.backToActivity')}
@@ -166,7 +166,7 @@ function Confirmer() {
 
   if (!activite) {
      return (
-         <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+         <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center p-4 text-center">
              <p className="text-yellow-600 text-xl">{t('confirmer.noData')}</p>
               <Button onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} className="mt-4">
                 {t('confirmer.backToActivity')}
@@ -176,11 +176,11 @@ function Confirmer() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+    <div className="min-h-screen bg-stone-100 p-8">
+      <div className="max-w-2xl mx-auto px-6 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{t('confirmer.title')}</h1>
+            <h1 className="font-lora text-xl font-semibold text-navy-900">{t('confirmer.title')}</h1>
             <h2 className="text-xl text-gray-600 mt-2 font-bold">{activite.titre} ({activite.code_activite})</h2>
           </div>
         </div>
@@ -214,7 +214,7 @@ function Confirmer() {
               }
 
               return (
-                  <div key={affirmation.id} className="bg-gray-50 p-6 rounded-lg">
+                  <div key={affirmation.id} className="bg-stone-50 rounded-xl border border-stone-200 shadow-sm p-4 mb-3">
                       <div className="flex items-center gap-2 mb-4">
                           <span className="font-semibold text-gray-600">
                               {t('confirmer.statementN', { n: activite.affirmations_associes.findIndex(a => a.id === affirmation.id) + 1 })}
@@ -226,7 +226,7 @@ function Confirmer() {
                       <div className="bg-white p-4 rounded border mt-4">
                           <div className="mb-4">
                               <span className="font-semibold">{t('confirmer.yourAnswer')} </span>
-                              <span className="text-blue-600 font-medium">{displayAnswer}</span>
+                              <span className="text-navy-700 font-medium">{displayAnswer}</span>
                           </div>
                           <div>
                               <span className="font-semibold">{t('confirmer.yourExplanation')} </span>
@@ -239,7 +239,7 @@ function Confirmer() {
                               {justification.length > 150 && (
                                   <button
                                       onClick={() => toggleExpand(affirmation.id)}
-                                      className="text-blue-500 hover:text-blue-700 text-sm mt-2"
+                                      className="text-navy-600 hover:text-navy-800 text-sm mt-2"
                                   >
                                       {isExpanded ? t('common.showLess') : t('common.showMore')}
                                   </button>
@@ -283,13 +283,13 @@ function Confirmer() {
              <Button
                 variant="outline"
                 onClick={() => router.push(`/etudiant/activite/feedback?code=${encodeURIComponent(activityCode || '')}`)}
-                className="px-6 py-2 border-blue-300 text-blue-600 hover:bg-blue-50"
+                className="px-6 py-2"
             >
                 {t('confirmer.viewFeedback')}
             </Button>
              <Button
                 onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)}
-                className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white"
+                className="px-8 py-2"
             >
                 {t('confirmer.backToPresentation')}
             </Button>
