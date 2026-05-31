@@ -1,5 +1,5 @@
 "use client";
-import { CSSProperties, Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
@@ -85,181 +85,62 @@ function ActivitePage() {
       router.push(`/etudiant/activite/participer?code=${encodeURIComponent(activityCode)}`);
   }
 
-  const styles: { [key: string]: CSSProperties } = {
-    container: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #f0f9ff 0%, #e6f3ff 100%)",
-      flexDirection: "column",
-      padding: "2rem",
-    },
-    formContainer: {
-      padding: "40px",
-      border: "none",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      flexDirection: "column",
-      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-      backgroundColor: "white",
-      borderRadius: "16px",
-      maxWidth: "1000px",
-      width: "100%",
-      transition: "transform 0.2s ease",
-    },
-    pageTitle: {
-      fontSize: "3.5rem",
-      fontWeight: "700",
-      color: "#1a1a1a",
-      marginBottom: "1.5rem",
-      textAlign: "center",
-    },
-    pageDescription: {
-      fontSize: "1.5rem",
-      color: "#666",
-      lineHeight: "1.6",
-      marginBottom: "2rem",
-      textAlign: "center",
-      maxWidth: "600px",
-    },
-    card: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      background: "#fff",
-      border: "1px solid #ddd",
-      borderRadius: "10px",
-      minHeight: "100px",
-      padding: "15px 20px",
-      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-      transition: "box-shadow 0.2s ease, transform 0.2s ease",
-      width: "100%",
-      maxWidth: "900px",
-      marginTop: "20px",
-    },
-    cardContent: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      width: "100%",
-    },
-    contentLeft: {
-      flex: 1,
-    },
-    cardTitle: {
-      fontSize: "2rem",
-      fontWeight: "700",
-      color: "#2B2B2B",
-      marginBottom: "1.2rem",
-      borderBottom: "2px solid #f0f0f0",
-      paddingBottom: "0.8rem",
-    },
-    cardDescription: {
-      color: "#555",
-      marginBottom: "1.5rem",
-      lineHeight: "1.6",
-      fontSize: "1.5rem",
-    },
-    participateButton: {
-      marginTop: "2rem",
-      padding: "12px 24px",
-      backgroundColor: "#2B2B2B",
-      color: "white",
-      border: "none",
-      borderRadius: "8px",
-      fontSize: "1.4rem",
-      fontWeight: "600",
-      cursor: "pointer",
-      transition: "all 0.2s ease",
-    },
-    errorText: {
-      color: 'red',
-      marginTop: '20px',
-      fontSize: '1.2rem',
-      textAlign: 'center'
-    },
-    loadingText: {
-        fontSize: '1.5rem',
-        color: '#555',
-        marginTop: '20px',
-        textAlign: 'center'
-    },
-    warningBox: {
-      padding: "12px",
-      backgroundColor: "#fff3cd",
-      border: "1px solid #ffeaa7",
-      borderRadius: "8px",
-      marginTop: "16px"
-    },
-    warningText: {
-      color: "#856404",
-      fontSize: "1.2rem",
-      margin: "0",
-      fontWeight: "600"
-    },
-    unpublishedBox: {
-      padding: "12px",
-      backgroundColor: "#f8d7da",
-      border: "1px solid #f5c6cb",
-      borderRadius: "8px",
-      marginTop: "16px"
-    },
-    unpublishedText: {
-      color: "#721c24",
-      fontSize: "1.2rem",
-      margin: "0",
-      fontWeight: "600"
-    }
-  };
-
   if (loading) {
-      return <div style={styles.container}><p style={styles.loadingText}>{t('activite.loading')}</p></div>;
+    return (
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center">
+        <p className="text-sm text-stone-500">{t('activite.loading')}</p>
+      </div>
+    );
   }
 
   if (error || !activite) {
-      return <div style={styles.container}><p style={styles.errorText}>{error || t('activite.cannotLoad')}</p></div>;
+    return (
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center">
+        <p className="text-sm text-red-600">{error || t('activite.cannotLoad')}</p>
+      </div>
+    );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.formContainer}>
-        <h1 style={styles.pageTitle}>{activite.titre || t('activite.presentation')}</h1>
-        <p style={styles.pageDescription}>
-          {activite.presentation_publique || t('activite.defaultDescription')}
+    <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center px-4 py-12">
+      <h1 className="font-lora text-2xl font-bold text-navy-900 mb-2 text-center">
+        {activite.titre || t('activite.presentation')}
+      </h1>
+      <p className="text-stone-500 text-sm text-center mb-6 max-w-xl">
+        {activite.presentation_publique || t('activite.defaultDescription')}
+      </p>
+
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6 w-full max-w-2xl">
+        <h3 className="text-lg font-bold text-stone-800 mb-3 border-b border-stone-100 pb-3">
+          {activite.titre}
+        </h3>
+        <p className="text-stone-600 text-sm leading-relaxed">
+          {activite.presentation_publique || t('activite.defaultCardDescription')}
         </p>
-        <div style={styles.card}>
-          <div style={styles.cardContent}>
-            <div style={styles.contentLeft}>
-              <h3 style={styles.cardTitle}>{activite.titre}</h3>
-              <p style={styles.cardDescription}>
-                {activite.presentation_publique || t('activite.defaultCardDescription')}
-              </p>
-              {activite.is_published === false && (
-                <div style={styles.unpublishedBox}>
-                  <p style={styles.unpublishedText}>
-                    {t('activite.draftWarning')}
-                  </p>
-                </div>
-              )}
-              {activite.affirmations_associes && activite.affirmations_associes.length === 0 && (
-                <div style={styles.warningBox}>
-                  <p style={styles.warningText}>
-                    {t('activite.noAffirmationsWarning')}
-                  </p>
-                </div>
-              )}
-            </div>
+
+        {activite.is_published === false && (
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-700 text-sm font-semibold m-0">
+              {t('activite.draftWarning')}
+            </p>
           </div>
-        </div>
-        <button
-          style={styles.participateButton}
-          onClick={handleStartActivity}
-        >
-          {t('activite.start')}
-        </button>
+        )}
+
+        {activite.affirmations_associes && activite.affirmations_associes.length === 0 && (
+          <div className="mt-4 p-3 bg-stone-50 border border-stone-200 rounded-lg">
+            <p className="text-stone-600 text-sm font-semibold m-0">
+              {t('activite.noAffirmationsWarning')}
+            </p>
+          </div>
+        )}
       </div>
+
+      <button
+        className="bg-navy-700 hover:bg-navy-900 text-white rounded-lg px-6 py-3 font-medium text-sm transition-colors cursor-pointer"
+        onClick={handleStartActivity}
+      >
+        {t('activite.start')}
+      </button>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { CSSProperties } from "react";
+import { cn } from "@/lib/utils";
 
 interface LanguageSwitcherProps {
   style?: CSSProperties;
@@ -10,52 +11,32 @@ interface LanguageSwitcherProps {
 export function LanguageSwitcher({ style, className }: LanguageSwitcherProps) {
   const { lang, setLang } = useLanguage();
 
-  const base: CSSProperties = {
-    padding: "4px 10px",
-    fontSize: "12px",
-    fontWeight: 600,
-    cursor: "pointer",
-    border: "1px solid #ccc",
-    transition: "background-color 0.2s, color 0.2s",
-    lineHeight: 1,
-  };
-
-  const active: CSSProperties = {
-    backgroundColor: "#2B2B2B",
-    color: "#fff",
-    borderColor: "#2B2B2B",
-  };
-
-  const inactive: CSSProperties = {
-    backgroundColor: "#fff",
-    color: "#555",
-  };
-
   return (
     <div
-      className={className}
-      style={{ display: "inline-flex", alignItems: "center", ...style }}
+      className={cn("inline-flex items-center rounded-lg border border-stone-200 bg-white overflow-hidden shadow-sm", className)}
+      style={style}
     >
       <button
         onClick={() => setLang("en")}
-        style={{
-          ...base,
-          ...(lang === "en" ? active : inactive),
-          borderRadius: "4px 0 0 4px",
-          borderRight: "none",
-        }}
         aria-pressed={lang === "en"}
+        className={cn(
+          "px-3 py-1.5 text-xs font-semibold transition-colors border-r border-stone-200",
+          lang === "en"
+            ? "bg-navy-700 text-white"
+            : "text-stone-600 hover:bg-stone-50"
+        )}
       >
         EN
       </button>
       <button
         onClick={() => setLang("fr")}
-        style={{
-          ...base,
-          ...(lang === "fr" ? active : inactive),
-          borderRadius: "0 4px 4px 0",
-        }}
         aria-pressed={lang === "fr"}
+        className={cn(
+          "px-3 py-1.5 text-xs font-semibold transition-colors",
+          lang === "fr"
+            ? "bg-navy-700 text-white"
+            : "text-stone-600 hover:bg-stone-50"
+        )}
       >
         FR
       </button>

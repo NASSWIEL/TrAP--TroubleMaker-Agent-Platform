@@ -49,11 +49,11 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+    <div className="min-h-screen bg-stone-100">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{t('listeAffirmations.title')}</h1>
+            <h1 className="font-lora text-2xl font-bold text-navy-900">{t('listeAffirmations.title')}</h1>
           </div>
           <Account
             name="Jean Dupont"
@@ -68,9 +68,9 @@ const App = () => {
             placeholder={t('listeAffirmations.search')}
             value={searchQuery}
             onChange={handleSearch}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full max-w-md px-4 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
           />
-          <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+          <button className="bg-navy-900 text-white px-4 py-2 rounded-md hover:bg-navy-800">
             <Plus size={24} />
           </button>
         </div>
@@ -79,7 +79,7 @@ const App = () => {
           {filteredAffirmations.map((affirmation) => (
             <div
               key={affirmation.id}
-              className="bg-gray-50 p-6 rounded-lg shadow-sm flex items-start space-x-4"
+              className="bg-white rounded-lg border border-stone-200 border-l-4 border-l-stone-300 p-3 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between"
             >
               <div className="flex items-center">
                 <button
@@ -97,7 +97,7 @@ const App = () => {
               <div className="flex items-center">
                 <button
                   onClick={() => handleEditAffirmation(affirmation.id)}
-                  className="text-blue-500 hover:text-blue-700"
+                  className="text-navy-900 hover:text-navy-700"
                 >
                   <Edit className="w-6 h-6" />
                 </button>

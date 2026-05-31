@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter, Lora } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-lora",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "TroubleMaker",
-  description: "TroubleMaker Agent Platform",
+  title: "TrAP — TroubleMaker Agent Platform",
+  description: "Medical quiz platform for critical thinking training",
 };
 
 export default function RootLayout({
@@ -26,12 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>
-          {children}
-        </Providers>
+      <body className={`${inter.variable} ${lora.variable} antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
