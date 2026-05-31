@@ -361,8 +361,8 @@ function Participer() {
   const currentResponseOptions = activite.type_affirmation_requise === 2 ? vraiFauxOptions : qcmValues;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 text-xl">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6">
+    <div className="min-h-screen bg-stone-100 p-4">
+      <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4 flex-wrap">
             <span className="font-medium text-gray-500 uppercase tracking-wider"></span>
@@ -373,8 +373,8 @@ function Participer() {
         {error && <p className="text-red-600 text-base mb-4 text-center">{error}</p>}
 
         <div className="space-y-6">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <p className="text-xl font-medium text-gray-800 mb-6 text-justify leading-relaxed">
+          <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 mb-4">
+            <p className="font-lora text-lg text-stone-900 mb-6 leading-relaxed">
               {currentAffirmationData.affirmation}
             </p>
 
@@ -387,12 +387,12 @@ function Participer() {
                 {currentResponseOptions.slice(0, activite.type_affirmation_requise).map((optionValue) => (
                   <div
                     key={optionValue}
-                    className="text-xl font-medium flex items-center justify-center sm:justify-start space-x-2 p-2 rounded-lg hover:bg-gray-100 border border-gray-200"
+                    className="flex items-center gap-3 p-3 rounded-lg border border-stone-200 cursor-pointer hover:border-navy-500 hover:bg-navy-50 transition-colors has-[:checked]:border-navy-600 has-[:checked]:bg-navy-50"
                   >
                     <RadioGroupItem value={optionValue} id={`${optionValue}-${currentAffirmationIndex}`} />
                     <Label
                       htmlFor={`${optionValue}-${currentAffirmationIndex}`}
-                      className="whitespace-nowrap text-lg font-medium cursor-pointer"
+                      className="whitespace-nowrap text-sm font-medium cursor-pointer text-stone-700"
                     >
                       {activite.type_affirmation_requise === 4
                         ? qcmLabels[optionValue]
@@ -402,11 +402,11 @@ function Participer() {
                 ))}
               </div>
               <div className="flex justify-center items-center border-t pt-4 mt-2">
-                <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 border border-gray-200">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-stone-200 cursor-pointer hover:border-navy-500 hover:bg-navy-50 transition-colors has-[:checked]:border-navy-600 has-[:checked]:bg-navy-50">
                   <RadioGroupItem value={DONT_KNOW} id={`unknown-${currentAffirmationIndex}`}/>
                   <Label
                     htmlFor={`unknown-${currentAffirmationIndex}`}
-                    className="whitespace-nowrap text-lg font-medium cursor-pointer"
+                    className="whitespace-nowrap text-sm font-medium cursor-pointer text-stone-700"
                   >
                     {t('common.dontKnow')}
                   </Label>
@@ -419,19 +419,18 @@ function Participer() {
               placeholder={t('participer.explainPlaceholder')}
               value={localResponses[currentAffirmationIndex]?.pourquoi || ""}
               onChange={(e) => handleLocalResponseChange(currentAffirmationIndex, "pourquoi", e.target.value)}
-              style={{ fontSize: '25px' }}
-              className="mt-6 w-full min-h-[120px] p-3 border border-gray-300 rounded-md"
+              className="mt-4 w-full min-h-[100px] rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent transition-colors resize-none"
               disabled={isSubmitting}
             />
           </div>
 
           <div className="text-center mb-4">
-            <span className="text-lg font-medium text-gray-500">
+            <span className="text-xs font-medium text-stone-500">
               {t('participer.statementN', { n: currentAffirmationIndex + 1, total: activite.affirmations_associes.length })}
             </span>
-             <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2 max-w-md mx-auto">
+             <div className="w-full bg-stone-200 rounded-full h-1.5 mt-2 max-w-md mx-auto">
                 <div
-                    className="bg-blue-600 h-2.5 rounded-full"
+                    className="bg-navy-700 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${((currentAffirmationIndex + 1) / activite.affirmations_associes.length) * 100}%` }}
                 ></div>
             </div>
