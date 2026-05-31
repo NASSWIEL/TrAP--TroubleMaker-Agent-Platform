@@ -134,167 +134,173 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        {t('listeActivite.loading')}
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center">
+        <p className="text-stone-500 text-sm">{t('listeActivite.loading')}</p>
       </div>
     );
   }
 
-  if (error) {
+  if (error && activities.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
-        {t('listeActivite.errorLabel')} {error}
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center">
+        <p className="text-red-600 text-sm">{t('listeActivite.errorLabel')} {error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800">{t('listeActivite.title')}</h1>
-            {lastRefresh && (
-              <p className="text-sm text-gray-500 mt-1">
-                {t('listeActivite.lastRefresh')} {lastRefresh.toLocaleTimeString(undefined, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
-                })}
-              </p>
-            )}
+    <div className="min-h-screen bg-stone-100">
+      {/* Top navbar */}
+      <nav className="bg-navy-900 text-white h-14 px-6 flex items-center justify-between sticky top-0 z-10 shadow-md">
+        <span className="font-lora font-bold text-xl tracking-tight">TrAP</span>
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 bg-navy-700 rounded-full flex items-center justify-center">
+            <User className="h-4 w-4 text-white" />
           </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-700">{userEmail}</span>
-              <span className="text-xs text-gray-500">{t('listeActivite.supervisor')}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              title={t('listeActivite.logout')}
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="text-sm font-medium">{t('listeActivite.loggingOut')}</span>
-            </button>
+          <div className="hidden sm:flex flex-col items-start leading-tight">
+            <span className="text-sm font-medium">{userEmail}</span>
+            <span className="text-xs text-navy-100">{t('listeActivite.supervisor')}</span>
           </div>
-        </header>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-navy-100 hover:text-white hover:bg-navy-700 rounded-lg px-3 py-1.5 text-sm transition-colors"
+            title={t('listeActivite.logout')}
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('listeActivite.loggingOut')}</span>
+          </button>
+        </div>
+      </nav>
 
-        <div className="mb-8 flex justify-center items-center space-x-4">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="font-lora text-2xl font-bold text-navy-900">{t('listeActivite.title')}</h1>
+          {lastRefresh && (
+            <p className="text-xs text-stone-400 mt-1">
+              {t('listeActivite.lastRefresh')} {lastRefresh.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+          )}
+        </div>
+
+        {/* Search + actions bar */}
+        <div className="flex items-center gap-3 mb-6">
           <input
             type="text"
             placeholder={t('listeActivite.search')}
             value={searchQuery}
             onChange={handleSearch}
-            className="w-full max-w-md px-4 py-3 text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 max-w-sm rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent transition-colors shadow-sm"
           />
           <button
             onClick={fetchActivities}
             disabled={loading}
-            className="bg-green-500 text-white px-4 py-3 rounded-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg bg-white border border-stone-300 text-stone-600 hover:text-navy-700 hover:bg-stone-50 shadow-sm transition-colors disabled:opacity-50"
             title={t('listeActivite.refresh')}
           >
-            <RefreshCw size={32} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
           <button
             onClick={() => router.push('/encadrant/creer_activite')}
-            className="bg-blue-500 text-white px-4 py-3 rounded-md hover:bg-blue-600"
+            className="flex items-center gap-1.5 bg-navy-700 hover:bg-navy-900 text-white rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors"
             title={t('listeActivite.newActivity')}
           >
-            <Plus size={32} />
+            <Plus size={16} />
+            <span className="hidden sm:inline">{t('listeActivite.newActivity')}</span>
           </button>
         </div>
 
-        <div className="space-y-8">
-          {error && <p className="text-center text-xl text-red-500">{t('listeActivite.errorLabel')} {error}</p>}
-          {!loading && !error && filteredActivities.length === 0 && (
-            <p className="text-center text-xl text-gray-500">
-              {searchQuery ? t('listeActivite.noResults') : t('listeActivite.noActivities')}
-            </p>
-          )}
-          {!loading && !error && filteredActivities.map((activity, index) => (
+        {/* Error inline */}
+        {error && (
+          <p className="text-red-600 text-sm mb-4">{t('listeActivite.errorLabel')} {error}</p>
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && filteredActivities.length === 0 && (
+          <div className="text-center py-20 text-stone-400">
+            <p className="text-sm">{searchQuery ? t('listeActivite.noResults') : t('listeActivite.noActivities')}</p>
+          </div>
+        )}
+
+        {/* Activity card grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {filteredActivities.map((activity, index) => (
             <div
               key={activity.code_activite}
-              className="bg-gray-50 p-8 rounded-lg shadow-sm flex items-start space-x-6"
+              className="bg-stone-50 rounded-xl border border-stone-200 shadow-sm flex flex-col"
             >
-              <div className="flex flex-col items-center space-y-4 mt-2">
-                <span className={`text-xl font-semibold space-y-4 ${activity.is_published ? "text-green-600" : "text-red-600"}`}>
+              {/* Card header */}
+              <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-lora font-semibold text-navy-900 text-base leading-snug truncate">
+                    {activity.titre}
+                  </h2>
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    {t('listeActivite.code')}: <span className="font-mono font-medium text-stone-600">{activity.code_activite}</span>
+                    {activity.destine_a && (
+                      <span className="ml-2 text-stone-400">· {activity.destine_a.nom}</span>
+                    )}
+                  </p>
+                </div>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border flex-shrink-0 ${
+                  activity.is_published
+                    ? 'bg-green-100 text-green-800 border-green-200'
+                    : 'bg-amber-100 text-amber-800 border-amber-200'
+                }`}>
                   {activity.is_published ? t('common.published') : t('common.draft')}
                 </span>
-                <div className="relative group">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">
-                      {activity.type_affirmation_requise === 2 ? 'V/F' : '4CH'}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-6 py-3 bg-gray-800 text-white text-l rounded-lg shadow-lg group-hover:block">
-                    {activity.type_affirmation_requise_display}
-                  </div>
-                </div>
               </div>
 
-              <div className="flex-1">
-                <h2 className="font-bold text-3xl text-gray-800 mb-4">{activity.titre}</h2>
-                <div className="font-semibold text-blue-600 mb-6 text-xl">
-                  {t('listeActivite.code')} {activity.code_activite}
-                  {activity.destine_a && (
-                    <span className="text-gray-500"> ({activity.destine_a.nom})</span>
-                  )}
-                  {!activity.destine_a && (
-                    <span className="text-gray-500"> ({t('common.noCategory')})</span>
-                  )}
-                </div>
-
-                <p className="text-gray-600 mb-6 text-xl">
-                  {expandedDescriptions[index]
-                    ? activity.description
-                    : activity.description.slice(0, 100) + (activity.description.length > 100 ? "..." : "")}
-                </p>
-                {activity.description.length > 100 && (
-                  <button
-                    onClick={() => toggleDescription(index)}
-                    className="text-blue-500 hover:text-blue-700 text-xl"
-                  >
-                    {expandedDescriptions[index] ? t('common.showLess') : t('common.showMore')}
-                  </button>
-                )}
-                <p className="text-gray-500 mt-4 text-xl">
-                  {t('listeActivite.affirmationCount')} <span className="font-bold">{activity.nbr_affirmations_associe}</span>
-                  <br />
-                  {t('listeActivite.authorizedStudents')} <span className="font-bold">{activity.etudiants_autorises.length}</span>
-                </p>
+              {/* Card meta */}
+              <div className="px-5 py-2 flex items-center gap-4 text-xs text-stone-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-5 h-5 bg-navy-100 rounded-full flex items-center justify-center text-navy-700 font-bold text-[10px]">
+                    {activity.type_affirmation_requise === 2 ? 'V/F' : '4C'}
+                  </span>
+                  {activity.type_affirmation_requise === 2 ? 'Vrai/Faux' : '4 choix'}
+                </span>
+                <span>{activity.nbr_affirmations_associe ?? activity.affirmations_associes?.length ?? 0} statements</span>
+                <span>{activity.etudiants_autorises?.length ?? 0} students</span>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <div className="relative group">
-                  <button
-                    onClick={() => router.push(`/encadrant/debrief?activity_code=${encodeURIComponent(activity.code_activite)}`)}
-                    className="flex items-center justify-center h-12 w-12 bg-transparent rounded-full hover:bg-blue-100">
-                    <MessageSquare className="h-7 w-7 text-blue-600" />
-                  </button>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-3 py-1 bg-gray-800 text-white text-base rounded shadow group-hover:block">
-                    {t('listeActivite.debrief')}
-                  </div>
+              {/* Description */}
+              {activity.description && (
+                <div className="px-5 py-2 flex-1">
+                  <p className={`text-sm text-stone-600 leading-relaxed ${expandedDescriptions[index] ? '' : 'line-clamp-2'}`}>
+                    {activity.description}
+                  </p>
+                  {activity.description.length > 120 && (
+                    <button
+                      onClick={() => toggleDescription(index)}
+                      className="text-xs text-navy-500 hover:text-navy-700 mt-1 transition-colors"
+                    >
+                      {expandedDescriptions[index] ? t('common.showLess') : t('common.showMore')}
+                    </button>
+                  )}
                 </div>
-                <div className="relative group">
-                  <button
-                    onClick={() => router.push(`/encadrant/parametres_activite?code=${encodeURIComponent(activity.code_activite)}`)}
-                    className="flex items-center justify-center h-12 w-12 bg-transparent rounded-full hover:bg-gray-200">
-                    <Settings className="h-7 w-7 text-gray-700" />
-                  </button>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-3 py-1 bg-gray-800 text-white text-base rounded shadow group-hover:block">
-                    {t('listeActivite.settings')}
-                  </div>
-                </div>
+              )}
+
+              {/* Card footer — actions */}
+              <div className="px-5 py-3 mt-auto border-t border-stone-100 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => router.push(`/encadrant/debrief?activity_code=${activity.code_activite}`)}
+                  className="p-2 rounded-lg text-stone-500 hover:text-navy-700 hover:bg-navy-50 transition-colors"
+                  title={t('listeActivite.debrief')}
+                >
+                  <MessageSquare size={16} />
+                </button>
+                <button
+                  onClick={() => router.push(`/encadrant/parametres_activite?code=${activity.code_activite}`)}
+                  className="p-2 rounded-lg text-stone-500 hover:text-navy-700 hover:bg-navy-50 transition-colors"
+                  title={t('listeActivite.settings')}
+                >
+                  <Settings size={16} />
+                </button>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
