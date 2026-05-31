@@ -658,20 +658,28 @@ const GererActivites = () => {
   console.log("Debug - Filtered affirmations:", filteredAffirmationsFromDB.length);
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
-      <header className="bg-white shadow-md p-4 mb-6 flex justify-center">
-        <h1 className="text-4xl font-bold text-gray-800">
+    <div className="min-h-screen bg-stone-100">
+      <header className="bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <button
+          onClick={() => router.push('/encadrant/liste_activite')}
+          className="flex items-center gap-1.5 text-stone-600 hover:text-navy-700 hover:bg-stone-100 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+        >
+          <span>←</span>
+          <span>Mes activités</span>
+        </button>
+        <h1 className="font-lora text-xl font-bold text-navy-900">
           {activityCodeParam ? t('parametresActivite.title') : t('creerActivite.title')}
         </h1>
+        <div className="w-24" />
       </header>
 
-      <div className="space-y-6">
-        <div className="bg-white shadow-md p-4 md:p-6 rounded-lg">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">{t('activityForm.title')}</h2>
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div className="bg-stone-50 rounded-xl border border-stone-200 shadow-sm p-6">
+          <h2 className="font-lora text-lg font-semibold text-navy-900 mb-6">{t('activityForm.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.learnerType')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.learnerType')}</label>
                 <div className="flex space-x-4">
                   <label className="flex items-center space-x-2 text-lg">
                     <input 
@@ -698,7 +706,7 @@ const GererActivites = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.formation')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.formation')}</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -739,17 +747,17 @@ const GererActivites = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityTitle')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.activityTitle')}</label>
                 <input type="text" placeholder="formation generale" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={activityTitle} onChange={(e) => setActivityTitle(e.target.value)} autoComplete="off"/>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityCode')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.activityCode')}</label>
                 <input type="text" placeholder="SECU1" className={`w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${activityCodeParam ? 'bg-gray-100' : ''}`} value={currentActivityCode} onChange={(e) => setCurrentActivityCode(e.target.value.toUpperCase())} readOnly={!!activityCodeParam} autoComplete="off"/>
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.veracityDegree')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.veracityDegree')}</label>
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
                   <p className="text-sm text-blue-700">
                     <strong>{t('activityForm.noteLabel')}</strong> {t('activityForm.veracityNote')}
@@ -767,21 +775,21 @@ const GererActivites = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.allowedEmails')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.allowedEmails')}</label>
                 <textarea placeholder="amine@gmail.com" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows={5} value={etudiantsAutorisesEmails} onChange={(e) => setEtudiantsAutorisesEmails(e.target.value)} autoComplete="off"/>
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.publicPresentation')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.publicPresentation')}</label>
                 <textarea placeholder="une presentation" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows={5} value={publicPresentation} onChange={(e) => setPublicPresentation(e.target.value)} autoComplete="off"/>
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.supervisorDescription')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.supervisorDescription')}</label>
                 <textarea placeholder="une presentation" className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} autoComplete="off"/>
               </div>
                <div>
-                  <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityStatus')}</label>
+                  <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.activityStatus')}</label>
                   <p className={`px-4 py-2 text-lg rounded-md font-medium ${isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {isPublished ? t('activityForm.publishedStatus') : t('activityForm.draftStatus')}
                   </p>
@@ -792,7 +800,7 @@ const GererActivites = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div
-            className="bg-white shadow-md p-4 md:p-6 rounded-lg min-h-[300px]"
+            className="bg-stone-50 rounded-xl border-2 border-dashed border-stone-200 shadow-sm p-6 min-h-[300px]"
             onDragOver={handleDragOver}
             onDrop={(event) => handleDrop(event, "selected")}
           >
@@ -802,8 +810,7 @@ const GererActivites = () => {
               {selectedAffirmations.map((affirmation) => (
                 <li
                   key={`selected-${affirmation.id}`}
-                  className={`p-3 rounded shadow-sm text-base flex flex-col gap-2
-                  ${affirmation.is_correct_vf === undefined ? 'bg-gray-50' : affirmation.is_correct_vf ? 'bg-green-50' : 'bg-red-50'}`}
+                  className={`bg-white rounded-lg border border-stone-200 p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2 ${affirmation.is_correct_vf === undefined ? 'border-l-4 border-l-stone-300' : affirmation.is_correct_vf ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-red-400'}`}
                 >
                   {editingAffirmation === affirmation.id ? (
                     // Mode édition
@@ -899,7 +906,7 @@ const GererActivites = () => {
           </div>
 
           <div
-            className="bg-white shadow-md p-4 md:p-6 rounded-lg min-h-[300px]"
+            className="bg-stone-50 rounded-xl border-2 border-dashed border-stone-200 shadow-sm p-6 min-h-[300px]"
             onDragOver={handleDragOver}
             onDrop={(event) => handleDrop(event, "database")}
           >
@@ -945,8 +952,7 @@ const GererActivites = () => {
                 {filteredAffirmationsFromDB.map((affirmation) => (
                   <li
                     key={`db-${affirmation.id}`}
-                    className={`p-3 rounded shadow-sm text-base flex flex-col gap-2
-                    ${affirmation.is_correct_vf === undefined ? 'bg-white' : affirmation.is_correct_vf ? 'bg-green-50' : 'bg-red-50'}`}
+                    className={`bg-white rounded-lg border border-stone-200 p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2 ${affirmation.is_correct_vf === undefined ? 'border-l-4 border-l-stone-300' : affirmation.is_correct_vf ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-red-400'}`}
                   >
                     {editingAffirmation === affirmation.id ? (
                       // Mode édition
@@ -1043,10 +1049,10 @@ const GererActivites = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-end space-y-3 md:space-y-0 md:space-x-4 pt-6">
+        <div className="sticky bottom-0 bg-white border-t border-stone-200 px-6 py-4 flex justify-end gap-3 -mx-6">
           <button
             type="button"
-            className="px-6 py-3 text-lg bg-red-500 text-white rounded-md hover:bg-red-600 w-full md:w-auto disabled:opacity-60"
+            className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             onClick={handleDeleteActivity}
             disabled={!activityCodeParam}
           >
@@ -1054,8 +1060,7 @@ const GererActivites = () => {
           </button>
           <button
             type="button"
-            className={`px-6 py-3 text-lg text-white rounded-md w-full md:w-auto disabled:opacity-60
-                        ${isPublished ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'}`}
+            className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${isPublished ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'}`}
             onClick={handleLaunchActivity}
             disabled={!currentActivityCode.trim()}
           >
@@ -1063,7 +1068,7 @@ const GererActivites = () => {
           </button>
           <button
             type="button"
-            className="px-6 py-3 text-lg bg-blue-500 text-white rounded-md hover:bg-blue-600 w-full md:w-auto disabled:opacity-60"
+            className="bg-navy-700 hover:bg-navy-900 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             onClick={handleSubmit}
             disabled={!activityTitle.trim() || (!activityCodeParam && !currentActivityCode.trim())}
           >
