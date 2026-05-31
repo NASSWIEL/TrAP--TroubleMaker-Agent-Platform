@@ -123,8 +123,8 @@ function FeedbackEtudiant() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-                <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6">
+            <div className="min-h-screen bg-stone-100 p-8">
+                <div className="max-w-2xl mx-auto px-6 py-8">
                     <Skeleton className="h-8 w-3/4 mb-2" />
                     <Skeleton className="h-6 w-1/2 mb-8" />
                     <div className="space-y-6">
@@ -139,7 +139,7 @@ function FeedbackEtudiant() {
 
     if (error) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+            <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center p-4 text-center">
                 <p className="text-red-600 text-xl">{error}</p>
                 <Button onClick={() => router.push(`/etudiant/activite?code=${encodeURIComponent(activityCode || '')}`)} className="mt-4">
                     {t('feedback.backToActivity')}
@@ -155,15 +155,15 @@ function FeedbackEtudiant() {
     const nbReponses = affirmationsWithReponses.length;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-            <div className="max-w-3xl mx-auto">
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="min-h-screen bg-stone-100 p-8">
+            <div className="max-w-2xl mx-auto px-6 py-8">
+                <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
                         <MessageSquare className="h-7 w-7 text-blue-600" />
-                        <h1 className="text-2xl font-bold text-gray-800">{t('feedback.title')}</h1>
+                        <h1 className="font-lora text-2xl font-bold text-navy-900">{t('feedback.title')}</h1>
                     </div>
                     <h2 className="text-lg text-gray-600 font-medium mb-1">{activite.titre} — {activite.code_activite}</h2>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-stone-500 mb-8">
                         {t('feedback.count', { n: nbDebriefs, m: nbReponses })}
                     </p>
                 </div>
@@ -175,27 +175,27 @@ function FeedbackEtudiant() {
                         const displayAnswer = getDisplayAnswer(affirmation, response);
 
                         return (
-                            <div key={affirmation.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <div key={affirmation.id} className="bg-stone-50 rounded-xl border border-stone-200 shadow-sm p-5 mb-4">
                                 <div className="flex items-start justify-between mb-3">
-                                    <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                                    <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
                                         {t('common.affirmation')} {index + 1}
                                     </span>
                                     {debrief ? (
-                                        <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-navy-100 text-navy-800 border border-navy-200 gap-1">
                                             <CheckCircle className="h-3 w-3" />
                                             {t('feedback.feedbackReceived')}
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 gap-1">
                                             <Clock className="h-3 w-3" />
                                             {t('feedback.pending')}
                                         </span>
                                     )}
                                 </div>
 
-                                <p className="text-gray-800 font-medium mb-4">{affirmation.affirmation}</p>
+                                <p className="font-lora text-base text-stone-900 font-medium mt-2 mb-3">{affirmation.affirmation}</p>
 
-                                <div className="bg-gray-50 rounded-lg p-4 mb-3">
+                                <div className="bg-white rounded-lg border border-stone-200 p-3 mb-3">
                                     <p className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('feedback.yourAnswer')}</p>
                                     <p className="text-blue-700 font-semibold">{displayAnswer}</p>
                                     {response?.justification && (
@@ -204,13 +204,13 @@ function FeedbackEtudiant() {
                                 </div>
 
                                 {debrief ? (
-                                    <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-                                        <p className="text-xs text-blue-600 uppercase font-semibold mb-1">{t('feedback.supervisorFeedback')}</p>
-                                        <p className="text-gray-800 whitespace-pre-wrap">{debrief.feedback}</p>
+                                    <div className="border-l-4 border-navy-500 bg-navy-50 p-3 rounded-r-lg">
+                                        <p className="text-xs font-semibold text-navy-700 uppercase tracking-wide mb-1">{t('feedback.supervisorFeedback')}</p>
+                                        <p className="text-sm text-stone-700 whitespace-pre-wrap">{debrief.feedback}</p>
                                     </div>
                                 ) : (
-                                    <div className="bg-amber-50 border-l-4 border-amber-300 rounded-lg p-4">
-                                        <p className="text-sm text-amber-700">{t('feedback.noFeedbackYet')}</p>
+                                    <div className="border-l-4 border-amber-400 bg-amber-50 p-3 rounded-r-lg text-sm text-amber-700 italic">
+                                        {t('feedback.noFeedbackYet')}
                                     </div>
                                 )}
                             </div>
@@ -218,7 +218,7 @@ function FeedbackEtudiant() {
                     })}
 
                     {affirmationsWithReponses.length === 0 && (
-                        <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
+                        <div className="bg-stone-50 rounded-xl border border-stone-200 shadow-sm p-8 text-center text-stone-500">
                             {t('feedback.noResponses')}
                         </div>
                     )}
