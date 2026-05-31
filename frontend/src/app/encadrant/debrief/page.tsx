@@ -264,10 +264,10 @@ function DebriefPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-        <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+      <div className="min-h-screen bg-stone-100">
+        <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex justify-center items-center h-64">
-            <div className="text-xl text-gray-600">{t('debrief.loading')}</div>
+            <div className="text-sm text-stone-500">{t('debrief.loading')}</div>
           </div>
         </div>
       </div>
@@ -276,8 +276,8 @@ function DebriefPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-        <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+      <div className="min-h-screen bg-stone-100">
+        <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="text-xl text-red-600">{t('common.error')}: {error}</div>
           </div>
@@ -288,8 +288,8 @@ function DebriefPage() {
 
   if (!activity) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-        <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+      <div className="min-h-screen bg-stone-100">
+        <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="text-xl text-gray-600">{t('debrief.activityNotFound')}</div>
           </div>
@@ -299,14 +299,12 @@ function DebriefPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800">{t('debrief.title')}</h1>
-            <h2 className="text-xl text-gray-600 mt-2">{activity.titre}</h2>
-            <p className="text-sm text-gray-500 mt-1">Code: {activity.code_activite}</p>
-          </div>
+    <div className="min-h-screen bg-stone-100">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="font-lora text-2xl font-bold text-navy-900">{t('debrief.title')}</h1>
+          <p className="text-base text-stone-600 mt-1">{activity.titre}</p>
+          <p className="text-xs text-stone-400 mt-0.5 font-mono">Code: {activity.code_activite}</p>
         </div>
 
         <div className="mb-8">
@@ -314,17 +312,17 @@ function DebriefPage() {
             placeholder={t('debrief.filterByEmail')}
             value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
             onChange={(e) => table.getColumn("email")?.setFilterValue(e.target.value)}
-            className="max-w-sm px-4 py-3 text-xl"
+            className="max-w-sm text-sm"
           />
         </div>
 
-        <div className="rounded-md border">
+        <div className="rounded-xl border border-stone-200 overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow key={headerGroup.id} className="bg-navy-900 hover:bg-navy-900">
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="text-white text-sm font-medium">
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
@@ -334,17 +332,17 @@ function DebriefPage() {
             <TableBody>
               {table.getRowModel().rows.map((row) => (
                 <React.Fragment key={row.original.email}>
-                  <TableRow>
+                  <TableRow className="hover:bg-navy-50 transition-colors">
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="text-xl">
+                      <TableCell key={cell.id} className="text-sm">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
                   </TableRow>
                   {expandedRows.has(row.original.email) && (
                     <TableRow>
-                      <TableCell colSpan={columns.length} className="bg-gray-50">
-                        <div className="p-4 space-y-6">
+                      <TableCell colSpan={columns.length} className="bg-navy-50 border-t border-navy-200 p-0">
+                        <div className="p-5 space-y-6">
                           {row.original.responses.map((response, index) => {
                             const expansionKey = `${row.original.email}-${response.id}`;
                             const isTextExpanded = expandedTexts.has(expansionKey);
@@ -355,7 +353,7 @@ function DebriefPage() {
                               <div key={index} className="space-y-3 pb-6 border-b last:border-b-0 last:pb-0">
                                 <div className="flex gap-2 items-baseline">
                                   <span className="font-medium whitespace-nowrap text-xl">{t('common.affirmation')} {response.affirmation.id}:</span>
-                                  <span className="text-gray-600 text-xl">{response.affirmation.affirmation}</span>
+                                  <span className="font-lora text-base text-stone-700">{response.affirmation.affirmation}</span>
                                 </div>
                                 <div className="flex gap-2 items-baseline">
                                   <span className="font-medium whitespace-nowrap text-xl">{t('debrief.response')}</span>
@@ -395,7 +393,7 @@ function DebriefPage() {
                                         value={debriefInputs[response.id] ?? ""}
                                         onChange={(e) => setDebriefInputs(prev => ({ ...prev, [response.id]: e.target.value }))}
                                         placeholder={t('debrief.placeholder')}
-                                        className="w-full mt-2 p-3 border border-gray-300 rounded-md text-lg"
+                                        className="w-full mt-2 rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent transition-colors resize-none"
                                         rows={3}
                                       />
                                       <Button
