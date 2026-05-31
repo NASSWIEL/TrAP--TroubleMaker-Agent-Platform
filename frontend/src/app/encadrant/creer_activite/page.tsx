@@ -770,19 +770,19 @@ const GererActivites = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
+    <div className="min-h-screen bg-stone-100">
       {/* Titre de la page */}
-      <header className="bg-white shadow-md p-4 mb-6 flex justify-between items-center">
+      <header className="bg-white border-b border-stone-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
         {/* Bouton retour au menu principal */}
         <button
           onClick={() => router.push('/encadrant/liste_activite')}
-          className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center space-x-2"
+          className="flex items-center gap-1.5 text-stone-600 hover:text-navy-700 hover:bg-stone-100 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
         >
           <span>←</span>
           <span>{t('creerActivite.mainMenu')}</span>
         </button>
 
-        <h1 className="text-4xl font-bold text-gray-800">{t('creerActivite.title')}</h1>
+        <h1 className="font-lora text-xl font-bold text-navy-900">{t('creerActivite.title')}</h1>
 
         {/* Form auto-save indicator */}
         <div className="flex items-center space-x-2">
@@ -791,7 +791,7 @@ const GererActivites = () => {
         </div>
       </header>
 
-      <div className="space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         {/* Display success message for restored data */}
         {showRestoredMessage && (
           <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -818,16 +818,14 @@ const GererActivites = () => {
         )}
 
         {/* First Row - Activity Details */}
-        <div className="bg-white shadow-md p-4 md:p-6 rounded-lg">
-          <header className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex justify-center">{t('activityForm.title')}</h2>
-          </header>
+        <div className="bg-stone-50 rounded-xl border border-stone-200 shadow-sm p-6">
+          <h2 className="font-lora text-lg font-semibold text-navy-900 mb-6">{t('activityForm.title')}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* First Column - Basic Information */}
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.learnerType')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.learnerType')}</label>
                 <div className="flex space-x-4">
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -855,7 +853,7 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.formation')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.formation')}</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -897,7 +895,7 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.activityTitle')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.activityTitle')}</label>
                 <input
                   type="text"
                   placeholder={t('activityForm.activityTitlePlaceholder')}
@@ -908,7 +906,7 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">
+                <label className="block text-sm font-medium text-stone-600 mb-1">
                   {t('activityForm.activityCode')}
                   <span className="text-sm text-gray-500 font-normal ml-2">{t('activityForm.activityCodeNote')}</span>
                 </label>
@@ -937,7 +935,7 @@ const GererActivites = () => {
             {/* Second Column - Activity Configuration */}
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.veracityDegree')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.veracityDegree')}</label>
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
                   <p className="text-sm text-blue-700">
                     <strong>{t('activityForm.noteLabel')}</strong> {t('activityForm.veracityNote')}
@@ -970,7 +968,7 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.feedbackType')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.feedbackType')}</label>
                 <div className="flex flex-col space-y-2">
                   <label className="flex items-center space-x-2 text-lg">
                     <input
@@ -998,7 +996,7 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.allowedEmails')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.allowedEmails')}</label>
                 <textarea
                   placeholder={t('activityForm.emailsPlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1012,7 +1010,7 @@ const GererActivites = () => {
             {/* Third Column - Descriptions */}
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.publicPresentation')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.publicPresentation')}</label>
                 <textarea
                   placeholder={t('activityForm.presentationPlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1023,7 +1021,7 @@ const GererActivites = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2 text-lg">{t('activityForm.supervisorDescription')}</label>
+                <label className="block text-sm font-medium text-stone-600 mb-1">{t('activityForm.supervisorDescription')}</label>
                 <textarea
                   placeholder={t('activityForm.supervisorDescPlaceholder')}
                   className="w-full px-4 py-2 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1040,11 +1038,11 @@ const GererActivites = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Selected Affirmations */}
           <div
-            className="bg-white shadow-md p-4 md:p-6 rounded-lg min-h-[400px] border-dashed border-2 border-gray-300"
+            className="bg-stone-50 rounded-xl border-2 border-dashed border-stone-200 shadow-sm p-6 min-h-[400px]"
             onDragOver={handleDragOver}
             onDrop={(event) => handleDrop(event, "selected")}
           >
-            <h2 className="text-3xl font-bold mb-6 flex justify-center">Affirmations sélectionnées ({selectedAffirmations.length})</h2>
+            <h2 className="font-lora text-lg font-semibold text-navy-900 mb-4">Affirmations sélectionnées ({selectedAffirmations.length})</h2>
             {selectedAffirmations.length === 0 && (
               <p className="text-gray-500 text-center mt-10">{t('activityForm.dragHere')}</p>
             )}
@@ -1052,8 +1050,7 @@ const GererActivites = () => {
               {selectedAffirmations.map((affirmation) => (
                 <li
                   key={`selected-${affirmation.id}`}
-                  className={`p-4 rounded shadow-sm text-xl flex flex-col gap-3
-                    ${affirmation.is_correct_vf ? 'bg-green-50' : 'bg-red-50'}`}
+                  className={`bg-white rounded-lg border border-stone-200 p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3 ${affirmation.is_correct_vf ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-red-400'}`}
                 >
                   {editingAffirmation === affirmation.id ? (
                     // Mode édition
@@ -1150,7 +1147,7 @@ const GererActivites = () => {
 
           {/* Affirmations Database */}
           <div
-            className="bg-white shadow-md p-4 md:p-6 rounded-lg border-dashed border-2 border-gray-300"
+            className="bg-stone-50 rounded-xl border-2 border-dashed border-stone-200 shadow-sm p-6"
             onDragOver={handleDragOver}
             onDrop={(event) => handleDrop(event, "database")}
           >
@@ -1297,10 +1294,10 @@ const GererActivites = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row justify-end space-y-4 md:space-y-0 md:space-x-4 mt-8">
+        <div className="sticky bottom-0 bg-white border-t border-stone-200 px-6 py-4 flex justify-end gap-3 -mx-6 mt-8">
           <button
             type="button"
-            className="px-6 py-3 text-lg bg-gray-500 text-white rounded-md hover:bg-gray-600 w-full md:w-auto"
+            className="bg-white border border-stone-300 hover:bg-stone-50 text-stone-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             onClick={handleDeleteActivity}
             disabled={loading}
           >
@@ -1308,7 +1305,7 @@ const GererActivites = () => {
           </button>
           <button
             type="button"
-            className="px-6 py-3 text-lg bg-red-500 text-white rounded-md hover:bg-red-600 w-full md:w-auto"
+            className="bg-white border border-stone-300 hover:bg-stone-50 text-stone-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             onClick={() => router.push('/encadrant/liste_activite')}
             disabled={loading}
           >
@@ -1316,7 +1313,7 @@ const GererActivites = () => {
           </button>
           <button
             type="button"
-            className="px-6 py-3 text-lg bg-blue-500 text-white rounded-md hover:bg-blue-600 w-full md:w-auto disabled:opacity-50"
+            className="bg-navy-700 hover:bg-navy-900 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
